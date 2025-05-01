@@ -1,0 +1,173 @@
+/* CSS personnalisé pour l'administration */
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+    color: #343a40;
+  }
+  
+  /* Navbar */
+  .navbar {
+    background-color: #007bff !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .navbar .navbar-brand {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #fff !important;
+  }
+  
+  .navbar-nav .nav-link {
+    color: #fff !important;
+    font-weight: 500;
+  }
+  
+  .navbar-nav .nav-link:hover {
+    color: #cce5ff !important;
+    text-decoration: underline;
+  }
+  
+  /* Breadcrumb */
+  .breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .breadcrumb .breadcrumb-item {
+    font-weight: 500;
+  }
+  
+  .breadcrumb .breadcrumb-item.active {
+    color: #6c757d;
+  }
+  
+  /* Messages */
+  .alert-info {
+    background-color: #e2f0ff;
+    border-color: #bee3f8;
+    color: #3178c6;
+    font-weight: 500;
+  }
+  
+  .message-container {
+    margin-top: 2rem;
+  }
+  
+  .message-list {
+    margin-bottom: 1rem;
+  }
+  
+  .message-item {
+    background-color: #f1f3f5;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .message-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .message-item strong {
+    font-weight: 600;
+    color: #007bff;
+  }
+  
+  /* Formulaire */
+  form .form-label {
+    font-weight: 500;
+  }
+  
+  form textarea.form-control {
+    border-radius: 12px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    padding: 1rem;
+  }
+  
+  form button[type="submit"] {
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+  
+  form button[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Section principale */
+  .container {
+    padding-top: 50px;
+  }
+  
+  .card {
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border: none;
+  }
+  
+  .card-body {
+    padding: 2rem;
+  }
+  
+  h2, h3 {
+    font-weight: 600;
+  }
+  
+  h2 {
+    color: #007bff;
+  }
+  
+  h3 {
+    color: #343a40;
+  }
+  
+  /* Bouton Nouveau Message */
+  .btn-lg {
+    font-weight: 600;
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    transition: background-color 0.3s ease;
+    margin-top: 30px; /* Espacement pour éloigner le bouton du contenu précédent */
+  }
+  
+  .btn-lg:hover {
+    background-color: #0056b3;
+    color: #fff;
+  }
+  
+  /* Espacement général */
+  .mb-4, .mt-4 {
+    margin-bottom: 2rem !important;
+  }
+  
+  .mb-3 {
+    margin-bottom: 1rem;
+  }
+  
+  .mt-4 {
+    margin-top: 2rem;
+  }
+  
+  /* Ajustements supplémentaires pour espacer les éléments */
+  .message-item + .message-item {
+    margin-top: 20px; /* Espacement entre les messages */
+  }
+  
+  .message-container {
+    margin-top: 3rem; /* Augmentation de l'espacement du conteneur des messages */
+  }
+  
+  /* Ajout de marge pour le bouton de navigation */
+  .navbar .nav-item + .nav-item {
+    margin-left: 15px; /* Ajoute un espace entre les éléments de la navbar */
+  }
+  

@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestion de Stock</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'first.css' %}" />
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Font Awesome Icons -->
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top py-3">
+    <div class="container">
+      <a class="navbar-brand fw-bold text-primary" href="#">Gestion<span class="text-dark">Stock</span></a>
+      <div class="d-flex">
+        <a href="{% url 'login' %}" class="btn btn-outline-primary rounded-pill px-4">Se connecter</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section d-flex align-items-center justify-content-center text-center">
+    <div class="container">
+      <h1 class="display-4 fw-bold text-white mb-3">Plateforme de Gestion de Stock Moderne</h1>
+      <p class="lead text-white-50 mb-4">Une solution puissante et intuitive pour la gestion de vos articles, commandes et fournisseurs.</p>
+      <a href="{% url 'login' %}" class="btn btn-light btn-lg rounded-pill shadow-sm px-5">Commencer</a>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features-section py-5 bg-light">
+    <div class="container">
+      <div class="row text-center mb-5">
+        <h2 class="fw-bold">Fonctionnalités principales</h2>
+        <p class="text-muted">Optimisées pour les gestionnaires, employés et administrateurs</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm text-center p-4">
+            <i class="fas fa-box fa-3x text-primary mb-3"></i>
+            <h5 class="fw-bold">Suivi des Articles</h5>
+            <p class="text-muted">Ajoutez, modifiez et surveillez tous vos produits efficacement.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm text-center p-4">
+            <i class="fas fa-truck-loading fa-3x text-success mb-3"></i>
+            <h5 class="fw-bold">Commandes & Fournisseurs</h5>
+            <p class="text-muted">Centralisez vos fournisseurs et suivez chaque commande en temps réel.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 border-0 shadow-sm text-center p-4">
+            <i class="fas fa-chart-bar fa-3x text-warning mb-3"></i>
+            <h5 class="fw-bold">Statistiques Dynamiques</h5>
+            <p class="text-muted">Analysez vos données avec des graphiques clairs et informatifs.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center text-white bg-primary py-4">
+    <div class="container">
+      <p class="mb-0">&copy; 2025 GestionStock - Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

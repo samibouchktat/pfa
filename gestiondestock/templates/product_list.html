@@ -1,0 +1,26 @@
+
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Liste des produits</h2>
+
+    {% if articles %}
+        <div class="row">
+            {% for article in articles %}
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ article.nom }}</h5>
+                            <p class="card-text">Référence : {{ article.reference }}</p>
+                            <p class="card-text">Prix : {{ article.prix }} €</p>
+                            <p class="card-text">Catégorie : {{ article.categorie }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Aucun article disponible pour le moment.</p>
+    {% endif %}
+</div>
+{% endblock %}

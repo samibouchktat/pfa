@@ -1,0 +1,123 @@
+{% load static %}
+{% csrf_token %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Tableau de Bord - Gestionnaire</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- FontAwesome -->
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+  <!-- Style custom -->
+  <link rel="stylesheet" href="{% static 'dashboard_gestionnaire.css' %}">
+</head>
+
+<body>
+
+  <!-- Barre de navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Gestionnaire</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#">Accueil</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Produits</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Commandes</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Rapports</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'msg' %}">Messages</a></li>
+        </ul>
+        <a href="/logout/" class="btn btn-outline-light ms-3">Déconnexion</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Section d'accueil -->
+  <div class="container my-5">
+    <div class="text-center mb-5">
+      <h1 class="display-4 fw-bold text-light">Bienvenue, Gestionnaire !</h1>
+      <p class="lead text-white-50">Surveillez et gérez facilement votre stock, vos commandes et plus encore.</p>
+    </div>
+
+    <!-- Cartes de gestion -->
+    <div class="row g-4">
+      <div class="col-lg-4 col-md-6">
+        <div class="card bg-primary text-white shadow-lg rounded-4 h-100">
+          <div class="card-body">
+            <h5 class="card-title">Gérer les Produits</h5>
+            <p class="card-text">Accédez à la gestion des produits, modifiez, ajoutez ou supprimez des articles.</p>
+            <a href="/products/" class="btn btn-light">Voir les produits</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6">
+        <div class="card bg-success text-white shadow-lg rounded-4 h-100">
+          <div class="card-body">
+            <h5 class="card-title">Gérer les Commandes</h5>
+            <p class="card-text">Suivez l'état des commandes, validez les livraisons et gérez les retours.</p>
+            <a href="/orders/" class="btn btn-light">Voir les commandes</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-md-6">
+        <div class="card bg-warning text-dark shadow-lg rounded-4 h-100">
+          <div class="card-body">
+            <h5 class="card-title">Statistiques et Rapports</h5>
+            <p class="card-text">Consultez les rapports détaillés sur les performances du stock et des ventes.</p>
+            <a href="/reports/" class="btn btn-dark">Voir les rapports</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques globales -->
+    <div class="row mt-5">
+      <div class="col-lg-6">
+        <div class="card bg-dark text-white shadow-lg rounded-4">
+          <div class="card-body">
+            <h5 class="card-title">Stock Actuel</h5>
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="display-6">1250</h6>
+              <span class="badge bg-primary">Disponible</span>
+            </div>
+            <p class="card-text">Nombre total d'articles en stock, prêt à être expédié.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card bg-dark text-white shadow-lg rounded-4">
+          <div class="card-body">
+            <h5 class="card-title">Commandes en Attente</h5>
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="display-6">42</h6>
+              <span class="badge bg-danger">Urgent</span>
+            </div>
+            <p class="card-text">Nombre de commandes en attente de validation ou d'expédition.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center text-white py-4 mt-5 bg-dark">
+    <small>&copy; 2025 - Gestion de Stock | Dashboard Gestionnaire</small>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

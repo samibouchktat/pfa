@@ -1,0 +1,143 @@
+body {
+  background: linear-gradient(135deg, #0d6efd, #1c1c64);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border-radius: 15px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 1s ease-in-out;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.logo span {
+  color: #ffc107;
+}
+
+.form-label {
+  margin-top: 15px;
+}
+
+.form-control, .form-select {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-login {
+  margin-top: 25px;
+  background-color: #ffc107;
+  border: none;
+  color: #000;
+  font-weight: bold;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  background-color: #e0a800;
+}
+
+.footer-links {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-links a {
+  color: #ffc107;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}
+
+.form-errors p {
+  color: #ff4d4d;
+  font-size: 0.9rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Style pour la sélection du rôle */
+.form-select {
+  background-color: rgba(255, 255, 255, 0.2); /* Arrière-plan transparent pour correspondre aux autres champs */
+  color: #fff; /* Texte blanc */
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Bordure légère */
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.form-select:focus {
+  background-color: rgba(255, 255, 255, 0.3); /* Arrière-plan un peu plus clair quand sélectionné */
+  border-color: #ffc107; /* Bordure jaune pour l'effet de focus */
+}
+
+/* Option dans le sélecteur */
+.form-select option {
+  background-color: #1c1c64; /* Arrière-plan des options pour plus de contraste */
+  color: #fff; /* Texte des options en blanc */
+}
+
+/* Ajustement pour les erreurs de formulaire */
+.form-errors p {
+  color: #ff4d4d;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+/* Style de la carte de connexion */
+.glass-card {
+  max-width: 450px; /* Taille de la carte ajustée */
+  padding: 50px;
+}
+
+.glass-card .form-control {
+  border-radius: 8px; /* Bordure arrondie */
+}
+
+.glass-card .btn-login {
+  border-radius: 8px; /* Bordure arrondie du bouton */
+}
+
+/* Rendre l'icône d'œil du mot de passe positionnée correctement */
+.password-container {
+  position: relative;
+}
+
+.password-container .eye-icon {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: white;
+}

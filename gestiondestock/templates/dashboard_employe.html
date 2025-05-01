@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Employé</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .navbar {
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    .navbar-brand {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .navbar-nav .nav-link {
+      color: white;
+      font-size: 1.1rem;
+    }
+    .navbar-nav .nav-link:hover {
+      text-decoration: underline;
+      color: #ffc107;
+    }
+    .card {
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card-body {
+      padding: 2rem;
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+    .btn-light {
+      background-color: #ffc107;
+      color: #000;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .btn-light:hover {
+      background-color: #e0a800;
+    }
+    .btn-dark {
+      background-color: #343a40;
+      color: white;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .btn-dark:hover {
+      background-color: #495057;
+    }
+    footer {
+      background-color: #203a43;
+      color: white;
+      padding: 1rem 0;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+    .footer-links a {
+      color: #ffc107;
+      text-decoration: none;
+    }
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+    .logout-btn {
+      font-weight: bold;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+    }
+    .logout-btn:hover {
+      background-color: #c82333;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Barre de navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Employé</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="#">Accueil</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'product_list' %}">Produits</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'msg' %}">Messages</a></li>
+      </ul>
+      <a href="{% url 'log_out' %}">
+        <button class="logout-btn">
+          Se déconnecter
+        </button>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Contenu principal -->
+<div class="container my-5">
+  <div class="text-center mb-4">
+    <h1 class="display-5 fw-bold">Bienvenue sur votre espace employé</h1>
+    <p class="lead">Gérez vos articles, suivez les commandes, et restez à jour facilement.</p>
+  </div>
+
+  <!-- Cartes d'action -->
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card bg-primary text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Consulter les produits</h5>
+          <p class="card-text">Accédez à la liste des articles disponibles dans le stock.</p>
+          <a href="{% url 'product_list' %}" class="btn btn-light">Voir les produits</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-success text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Ajouter un produit</h5>
+          <p class="card-text">Ajoutez un nouvel article au stock avec toutes ses informations.</p>
+          <a href="{% url 'add_product' %}" class="btn btn-light">Ajouter</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-warning text-dark h-100">
+        <div class="card-body">
+          <h5 class="card-title">Modifier un produit</h5>
+          <p class="card-text">Accédez à la liste pour modifier les informations d’un produit.</p>
+          <a href="{% url 'product_list' %}" class="btn btn-dark">Modifier</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bouton pour compléter le profil -->
+    <div class="col-md-4">
+      <div class="card bg-info text-white h-100">
+        <div class="card-body">
+          <h5 class="card-title">Compléter votre profil</h5>
+          <p class="card-text">Ajoutez ou mettez à jour vos informations personnelles.</p>
+          <a href="{% url 'complete_profile' %}" class="btn btn-light">Compléter le profil</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="text-center text-white py-4 mt-5 bg-dark">
+  <small>&copy; 2025 - Gestion de Stock | Employé Dashboard</small>
+</footer>
+
+</body>
+</html>
