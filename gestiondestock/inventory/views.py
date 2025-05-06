@@ -1,14 +1,32 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from .models import Article, CustomUser, Fournisseur, Commande, Avoir, Message
-from .forms import ArticleForm, FournisseurForm, CommandeForm, AvoirFormSet
-from django.db.models import Q
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.cache import never_cache
+from django.db.models import Q, Sum
+from django.db.models.functions import Coalesce
 from django.contrib import messages
 from twilio.rest import Client
+import os
+import json
+import datetime
+import openai
+
+from .models import Article, CustomUser, Fournisseur, Commande, Message, Stock
+from .forms import ArticleForm, FournisseurForm, CommandeForm, AvoirFormSet
 from django import forms
+from django.shortcuts import render
+
+
+from .models import Article, Stock, Commande
+from .utils import generate_report
+
+# Configure OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+def is_manager(user):
+    return getattr(user, "role", None) in {"gestionnaire", "admin"}
 
 
 # Page d'accueil
@@ -113,7 +131,6 @@ def add_product(request):
         form = ArticleForm()
     return render(request, 'add_product.html', {'form': form})
 
-
 # Modifier un article
 @login_required
 def edit_product(request, id):
@@ -196,23 +213,20 @@ def commande_list(request):
 
 # Ajouter une commande
 @login_required
-def add_commande(request):
-    if request.method == "POST":
-        form = CommandeForm(request.POST)
-        formset = AvoirFormSet(request.POST)
-        if form.is_valid() and formset.is_valid():
-            commande = form.save()
-            avoirs = formset.save(commit=False)
-            for avoir in avoirs:
-                avoir.commande = commande
-                avoir.save()
-            messages.success(request, "Commande ajoutée avec succès.")
-            return redirect('commande_list')
+def add_product(request):
+    if request.method == 'POST':
+        form = ArticleForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Produit ajouté avec succès.")
+            return redirect('product_list')
+        else:
+            messages.error(request, "Merci de corriger les erreurs ci-dessous.")
     else:
-        form = CommandeForm()
-        formset = AvoirFormSet()
-    return render(request, 'add_commande.html', {'form': form, 'formset': formset})
+        # Pré‐remplir la catégorie par défaut
+        form = ArticleForm(initial={'categorie': 'electronique'})
 
+    return render(request, 'add_product.html', {'form': form})
 
 # Supprimer une commande
 @login_required
@@ -241,7 +255,6 @@ def conversation(request, user_id):
             Message.objects.create(sender=current_user, receiver=other_user, content=content)
             return redirect('conv', user_id=other_user.id)
 
-    # Gérer les messages paginés
     messages_list = Message.objects.filter(
         (Q(sender=current_user) & Q(receiver=other_user)) |
         (Q(sender=other_user) & Q(receiver=current_user))
@@ -257,12 +270,10 @@ def conversation(request, user_id):
     })
 
 
-# Formulaire de complétion du profil
-class CompleteProfileForm(forms.ModelForm):
+# Profile completion form and SMS\ class CompleteProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['phone_number']
-
 
 @login_required
 def complete_profile(request):
@@ -270,24 +281,20 @@ def complete_profile(request):
         form = CompleteProfileForm(request.POST)
         if form.is_valid():
             numero_telephone = form.cleaned_data['phone_number']
-            envoyer_sms(numero_telephone)  # Fonction qui envoie le SMS
-            return redirect('success_url')  # Redirige après l'envoi du SMS
+            envoyer_sms(numero_telephone)
+            return redirect('success_url')
     else:
         form = CompleteProfileForm()
-
     return render(request, 'complete_profile.html', {'form': form})
 
-
-# Assure-toi de remplacer ces valeurs par les informations de ton compte Twilio
 account_sid = 'TON_ACCOUNT_SID'
 auth_token = 'TON_AUTH_TOKEN'
 client = Client(account_sid, auth_token)
 
-
 def envoyer_sms(numero_telephone):
     message = client.messages.create(
-        body="Votre code de vérification est : 123456",  # Remplace par ton message
-        from_='+TON_NUMERO_TWILIO',  # Remplace par ton numéro Twilio
+        body="Votre code de vérification est : 123456",
+        from_='+TON_NUMERO_TWILIO',
         to=numero_telephone
     )
     return message.sid
@@ -295,3 +302,37 @@ def envoyer_sms(numero_telephone):
 
 def success_view(request):
     return render(request, 'success.html')
+
+
+# inventory/views.py
+
+def is_manager(user):
+    return getattr(user, "role", None) in {"gestionnaire", "admin"}
+
+@login_required
+@user_passes_test(is_manager)
+def report_ai_view(request):
+    # 1. Calcul des stats
+    total = Article.objects.count()
+    entree = Stock.objects.aggregate(t=Coalesce(Sum("entree"), 0))["t"]
+    sortie = Stock.objects.aggregate(t=Coalesce(Sum("sortie"), 0))["t"]
+    dispo = entree - sortie
+    rupt = Article.objects.filter(stock__lte=0).count()
+    en_att = Commande.objects.filter(etat="en_attente").count()
+
+    stats = {
+        "date": datetime.date.today().strftime("%d/%m/%Y"),
+        "totalArticles": total,
+        "stockDisponible": dispo,
+        "ruptures": rupt,
+        "cmdEnAttente": en_att,
+    }
+
+    # 2. Générer le rapport localement
+    report_text = generate_report(stats)
+
+    # 3. Afficher dans le template
+    return render(request, "report_ai.html", {
+        "stats": stats,
+        "report": report_text,  # on traite le texte brut
+    })

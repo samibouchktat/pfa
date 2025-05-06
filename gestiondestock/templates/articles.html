@@ -6,9 +6,7 @@
     <title>Gestion des Articles</title>
 
     <!-- Feuilles de style -->
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <link rel="stylesheet" href="{% static 'articles.css' %}">
 
     <style>
@@ -18,23 +16,10 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        .search-box {
-            max-width: 300px;
-        }
-
-        .table thead {
-            background-color: #f8f9fa;
-        }
-
-        tr.shadow-row {
-            transition: all 0.2s ease;
-        }
-
-        tr.shadow-row:hover {
-            background-color: #f1f1f1;
-            box-shadow: 0 0 12px rgba(0,0,0,0.1);
-        }
+        .search-box { max-width: 300px; }
+        .table thead { background-color: #f8f9fa; }
+        tr.shadow-row { transition: all 0.2s ease; }
+        tr.shadow-row:hover { background-color: #f1f1f1; box-shadow: 0 0 12px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -42,9 +27,11 @@
         <!-- En-tête de la page -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="fw-bold text-gradient">📦 Gestion des Articles</h1>
-            <a href="{% url 'ajouter_article' %}" class="btn btn-success btn-lg rounded-pill px-4 shadow-sm">
+            {% if user.role == 'gestionnaire' or user.role == 'admin' %}
+            <a href="{% url 'add_product' %}" class="btn btn-success btn-lg rounded-pill px-4 shadow-sm">
                 ➕ Ajouter un Article
             </a>
+            {% endif %}
         </div>
 
         <!-- Barre de recherche -->
@@ -61,8 +48,10 @@
                             <th>Nom</th>
                             <th>Référence</th>
                             <th>Prix</th>
-                            <th>Catégorie</th>
+                            <th>Quantité</th>
+                            {% if user.role == 'gestionnaire' or user.role == 'admin' %}
                             <th class="text-center">Actions</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody id="articlesTable">
@@ -71,7 +60,8 @@
                             <td class="fw-semibold">{{ article.nom }}</td>
                             <td>{{ article.reference }}</td>
                             <td>{{ article.prix }} €</td>
-                            <td>{{ article.categorie }}</td>
+                            <td>{{ article.quantite }}</td>
+                            {% if user.role == 'gestionnaire' or user.role == 'admin' %}
                             <td class="text-center">
                                 <a href="{% url 'modifier_article' article.id %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                     ✏️ Modifier
@@ -80,10 +70,13 @@
                                     🗑️ Supprimer
                                 </a>
                             </td>
+                            {% endif %}
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Aucun article disponible pour le moment.</td>
+                            <td colspan="{% if user.role == 'gestionnaire' or user.role == 'admin' %}5{% else %}4{% endif %}" class="text-center text-muted">
+                                Aucun article disponible pour le moment.
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -96,14 +89,13 @@
     <script>
         const searchInput = document.getElementById('searchInput');
         const tableRows = document.querySelectorAll('#articlesTable tr');
-
         searchInput.addEventListener('keyup', function () {
             const query = this.value.toLowerCase();
             tableRows.forEach(row => {
-                const rowText = row.innerText.toLowerCase();
-                row.style.display = rowText.includes(query) ? '' : 'none';
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
             });
         });
     </script>
 </body>
 </html>
+```

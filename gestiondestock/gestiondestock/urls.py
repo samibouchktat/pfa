@@ -1,3 +1,12 @@
+# gestiondestock/urls.py
+from django.contrib import admin
+from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
+
+from inventory import views as inv   # toutes tes vues app
+
 from django.contrib import admin
 from django.urls import path
 from inventory import views
@@ -38,12 +47,31 @@ urlpatterns = [
     path('gestion/articles/<int:id>/supprimer/', views.delete_product, name='supprimer_article'),
 
     # Gestion des messages
-    path('gestion/msg/', views.msg, name='msg'),
-    path('conversation/<int:user_id>/', views.conversation, name='conv'),
+     # Messagerie interne
+    # URL canonique pour la liste des utilisateurs (conversations)
+    path("messages/", inv.msg, name="messages_home"),
+    # alias court si besoin
+    path("gestion/msg/", inv.msg, name="msg"),
+
+    # Conversations
+    path("messages/<int:user_id>/", inv.conversation, name="conversation"),
+    path("conv/<int:user_id>/",   inv.conversation, name="conv"),
+
     path('completer-profil/', views.complete_profile, name='complete_profile'),
     path('success/', views.success_view, name='success_url'),
+    path("report_ai/",          inv.report_ai_view,    name="report_ai"),            # URL simple
+                                   # alias lisible
+    
 
 ]  # Pas de "+" ici, directement ajouter les lignes
 
 # Route pour les fichiers statiques (images, JS, CSS, etc.)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# -------------------------------------------------------- FICHIERS STATIC & MEDIA (DEV)
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(
+        getattr(settings, "MEDIA_URL", "/media/"),
+        document_root=getattr(settings, "MEDIA_ROOT", settings.BASE_DIR / "media"),
+    )
