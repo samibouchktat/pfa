@@ -1,10 +1,12 @@
 import os
+
 from pathlib import Path
+import environ
 
 # Base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# SECURITY WARNING: keepSS the secret key used in production secret!
 SECRET_KEY = 'django-insecure-9wk9v#!qk$5j(-b3o@n1%ca@%*fiw9#62n@4t8w6()i)7z^0^0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -23,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
      'inventory',
     'widget_tweaks',
+    'accounts',
 
 ]
 
@@ -86,10 +89,29 @@ STATICFILES_DIRS = [BASE_DIR / 'static']  # ✔ pour trouver tes CSS
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Authentication settings
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGIN_URL = '/login/'
-TWILIO_ACCOUNT_SID = 'TON_ACCOUNT_SID'
-TWILIO_AUTH_TOKEN = 'TON_AUTH_TOKEN'
-TWILIO_PHONE_NUMBER = '+TON_NUMERO_TWILIO'
-AUTH_USER_MODEL = 'inventory.CustomUser' 
+
+# settings.py
+
+# 1) Lecture du .env
+import environ
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env()
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    env.read_env(env_file)
+
+# 2) DEBUG
+DEBUG = env.bool("DEBUG", default=True)
+
+# 3) Email (toujours SMTP Gmail)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST    = "smtp.gmail.com"
+EMAIL_PORT    = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER     = env("GMAIL_USER")
+EMAIL_HOST_PASSWORD = env("GMAIL_APP_PASSWORD")
+DEFAULT_FROM_EMAIL  = EMAIL_HOST_USER
+AUTH_USER_MODEL = 'inventory.CustomUser'

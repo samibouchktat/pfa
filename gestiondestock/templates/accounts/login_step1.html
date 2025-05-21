@@ -1,0 +1,8 @@
+<form method="post">
+    {% csrf_token %}
+    <input name="username" placeholder="Utilisateur" required>
+    <input name="password" type="password" placeholder="Mot de passe" required>
+    <button type="submit">Suivant</button>
+    {% for msg in messages %}<p class="error">{{ msg }}</p>{% endfor %}
+  </form>
+  

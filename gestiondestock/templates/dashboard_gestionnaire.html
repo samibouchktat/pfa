@@ -93,7 +93,7 @@
           <li class="nav-item"><a class="nav-link" href="{% url 'product_list' %}">Produits</a></li>
      
           <li class="nav-item"><a class="nav-link" href="{% url 'report_ai' %}">Rapports</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'messages_home' %}">Messages</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'msg' %}">Messages</a></li>
         </ul>
         <a href="{% url 'log_out' %}" class="btn btn-outline-danger btn-sm">Déconnexion</a>
       </div>
@@ -121,15 +121,27 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="card h-100">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title"><i class="fas fa-shopping-cart me-2"></i>Commandes</h5>
-            <p class="card-text flex-grow-1">Suivez et gérez vos commandes en temps réel.</p>
-          
-          </div>
-        </div>
-      </div>
+     <div class="col-md-4">
+  <div class="card h-100">
+    <div class="card-body d-flex flex-column">
+      <h5 class="card-title"><i class="fas fa-shopping-cart me-2"></i>Commandes</h5>
+      <p class="card-text flex-grow-1">Suivez et gérez vos commandes en temps réel.</p>
+      <a href="{% url 'commande_list' %}" class="btn btn-success btn-dashboard mt-auto">Voir les commandes</a>
+      <a href="{% url 'add_commande' %}" class="btn btn-outline-primary btn-dashboard mt-2">Nouvelle commande</a>
+    </div>
+  </div>
+</div>
+<div class="col-md-4">
+  <div class="card h-100">
+    <div class="card-body d-flex flex-column">
+      <h5 class="card-title"><i class="fas fa-truck me-2"></i>Fournisseurs</h5>
+      <p class="card-text flex-grow-1">Gérez vos fournisseurs : ajout, modification, suppression.</p>
+      <a href="{% url 'fournisseur_list' %}" class="btn btn-info btn-dashboard mt-auto">Voir les fournisseurs</a>
+      <a href="{% url 'add_fournisseur' %}" class="btn btn-outline-success btn-dashboard mt-2">Nouveau fournisseur</a>
+    </div>
+  </div>
+</div>
+
       <div class="col-md-4">
         <div class="card h-100">
           <div class="card-body d-flex flex-column">

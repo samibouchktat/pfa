@@ -1,0 +1,7 @@
+<h2>Entrez votre code de vérification</h2>
+<form method="post">
+  {% csrf_token %}
+  <input name="otp_code" maxlength="6" placeholder="000000" required>
+  <button type="submit">Valider</button>
+  {% for msg in messages %}<p class="error">{{ msg }}</p>{% endfor %}
+</form>

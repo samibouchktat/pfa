@@ -63,10 +63,10 @@
                             <td>{{ article.quantite }}</td>
                             {% if user.role == 'gestionnaire' or user.role == 'admin' %}
                             <td class="text-center">
-                                <a href="{% url 'modifier_article' article.id %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                <a href="{% url 'edit_product' article.id %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                     ✏️ Modifier
                                 </a>
-                                <a href="{% url 'supprimer_article' article.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                <a href="{% url 'delete_product' article.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
                                     🗑️ Supprimer
                                 </a>
                             </td>

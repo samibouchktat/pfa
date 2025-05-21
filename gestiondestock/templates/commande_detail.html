@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détail de la commande</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Détail de la commande n°{{ commande.id }}</h2>
+    <ul class="list-group mb-3">
+        <li class="list-group-item"><strong>Fournisseur :</strong> {{ commande.fournisseur.nom }}</li>
+        <li class="list-group-item"><strong>État :</strong> {{ commande.etat }}</li>
+        <li class="list-group-item"><strong>Date :</strong> {{ commande.date }}</li>
+        <li class="list-group-item"><strong>Employé :</strong> {{ commande.employe.username }}</li>
+    </ul>
+    <h4>Articles commandés :</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Article</th>
+                <th>Quantité</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for avoir in avoirs %}
+            <tr>
+                <td>{{ avoir.article.nom }}</td>
+                <td>{{ avoir.quantite }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+  <a href="{% url 'dashboard_fournisseur' %}" class="btn btn-secondary">Retour</a>
+
+</div>
+</body>
+</html>

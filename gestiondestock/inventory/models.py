@@ -4,6 +4,9 @@ from django.conf import settings
 from django.utils import timezone
 import random, string
 from datetime import timedelta
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Utilisateur personnalisé avec rôles
 class CustomUser(AbstractUser):
@@ -11,6 +14,7 @@ class CustomUser(AbstractUser):
         ('admin', 'Administrateur'),
         ('gestionnaire', 'Gestionnaire de stock'),
         ('employe', 'Employé'),
+        ('fournisseur', 'Fournisseur'),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
@@ -20,6 +24,7 @@ class CustomUser(AbstractUser):
 
 # Fournisseur
 class Fournisseur(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'fournisseur'}, related_name='fournisseur_profile')
     nom     = models.CharField(max_length=100)
     contact = models.CharField(max_length=20)
     email   = models.EmailField(unique=True)
@@ -80,6 +85,7 @@ class Commande(models.Model):
         )
 
 class Avoir(models.Model):
+    
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='articles_commande')
     article  = models.ForeignKey(Article, on_delete=models.CASCADE)
     quantite = models.PositiveIntegerField()
@@ -126,3 +132,27 @@ class TwoFactorCode(models.Model):
         code = cls.generate_code()
         expiration_time = timezone.now() + timedelta(minutes=10)
         return cls.objects.create(user=user, code=code, expiration_time=expiration_time)
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+    phone   = models.CharField("Téléphone", max_length=20, blank=True)
+    address = models.TextField("Adresse", blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} — Profil"
+
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created and not hasattr(instance, 'profile'):
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_profile(sender, instance, **kwargs):
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+

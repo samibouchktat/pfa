@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Fournisseur</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .badge { font-size: 1em; }
+        .search-bar { max-width: 350px; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+
+    <!-- Personalisation -->
+    <div class="d-flex align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">Bienvenue, {{ request.user.username }} !</h2>
+            <div class="text-muted">{{ fournisseur.nom }} — {{ fournisseur.email }}</div>
+        </div>
+        <div class="ms-auto">
+            <a href="{% url 'log_out' %}" class="btn btn-outline-danger btn-sm">Déconnexion</a>
+        </div>
+    </div>
+
+    <!-- Statistiques globales -->
+    <div class="row g-3 mb-4">
+        <div class="col">
+            <div class="alert alert-warning d-flex flex-column align-items-center">
+                <span class="fw-bold">{{ nb_en_attente }}</span>
+                <small>En attente</small>
+            </div>
+        </div>
+        <div class="col">
+            <div class="alert alert-success d-flex flex-column align-items-center">
+                <span class="fw-bold">{{ nb_validees }}</span>
+                <small>Validées</small>
+            </div>
+        </div>
+        <div class="col">
+            <div class="alert alert-danger d-flex flex-column align-items-center">
+                <span class="fw-bold">{{ nb_refusees }}</span>
+                <small>Refusées</small>
+            </div>
+        </div>
+        <div class="col">
+            <div class="alert alert-primary d-flex flex-column align-items-center">
+                <span class="fw-bold">{{ montant_total|default:"0.00" }} €</span>
+                <small>Total commandes</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications / messages flash -->
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+            <div class="alert alert-info">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Barre de recherche/filtrage -->
+    <form method="get" class="mb-4 d-flex">
+        <input type="text" class="form-control me-2 search-bar" name="search" placeholder="Rechercher une commande..." value="{{ request.GET.search }}">
+        <select name="filtre_etat" class="form-select me-2" style="width:170px;">
+            <option value="">Tous les statuts</option>
+            <option value="en_attente" {% if request.GET.filtre_etat == "en_attente" %}selected{% endif %}>En attente</option>
+            <option value="validée" {% if request.GET.filtre_etat == "validée" %}selected{% endif %}>Validées</option>
+            <option value="refusée" {% if request.GET.filtre_etat == "refusée" %}selected{% endif %}>Refusées</option>
+        </select>
+        <button class="btn btn-secondary">Filtrer</button>
+    </form>
+
+    <!-- Tableau des commandes -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold">
+            Commandes reçues
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Gestionnaire</th>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>État</th>
+                    <th>Action</th>
+                    <th>Détail</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for cmd in commandes %}
+                <tr>
+                    <td>{{ cmd.id }}</td>
+                    <td>{{ cmd.employe.username }}</td>
+                    <td>{{ cmd.date }}</td>
+                    <td>{{ cmd.total_price }} €</td>
+                    <td>
+                        {% if cmd.etat == "en_attente" %}
+                            <span class="badge bg-warning text-dark">En attente</span>
+                        {% elif cmd.etat == "validée" %}
+                            <span class="badge bg-success">Validée</span>
+                        {% elif cmd.etat == "refusée" %}
+                            <span class="badge bg-danger">Refusée</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ cmd.etat }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if cmd.etat == "en_attente" %}
+                        <a href="{% url 'valider_commande' cmd.id %}" class="btn btn-success btn-sm">Accepter</a>
+                        <a href="{% url 'refuser_commande' cmd.id %}" class="btn btn-danger btn-sm">Refuser</a>
+                        {% else %}
+                        <span class="text-muted">Aucune action</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'commande_detail' cmd.id %}" class="btn btn-outline-info btn-sm">Voir</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">Aucune commande reçue.</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
