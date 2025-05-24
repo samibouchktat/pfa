@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Mes Demandes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+  <h2>Mes demandes</h2>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Article</th>
+        <th>Quantité</th>
+        <th>Date</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for demande in demandes %}
+      <tr>
+        <td>{{ demande.article.nom }}</td>
+        <td>{{ demande.quantite }}</td>
+        <td>{{ demande.date_demande|date:"d/m/Y H:i" }}</td>
+        <td>{{ demande.get_statut_display }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4">Aucune demande enregistrée.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

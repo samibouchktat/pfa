@@ -9,7 +9,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Q
 from django.contrib.auth.models import AbstractUser
-
+from django.db import models
+from django.contrib.auth.models import User
 
 # Utilisateur personnalisé avec rôles
 class CustomUser(AbstractUser):
@@ -50,7 +51,8 @@ class Article(models.Model):
     quantite  = models.IntegerField(default=0, help_text="Quantité réelle en stock")
     stock     = models.IntegerField(default=0, help_text="Stock calculé ou ajusté manuellement")
     description = models.TextField(blank=True, default="")
-
+   
+    stock_min = models.PositiveIntegerField(default=1)
     def __str__(self):
         return f"{self.nom} ({self.reference})"
 
@@ -170,5 +172,44 @@ def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):
         instance.profile.save()
 
+class MouvementStock(models.Model):
+    TYPE_CHOICES = [
+        ('entree', 'Entrée'),
+        ('sortie', 'Sortie'),
+    ]
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    type_mouvement = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    quantite = models.PositiveIntegerField()
+    date = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True
+    )
+    motif = models.CharField(max_length=255, blank=True)
 
+    def save(self, *args, **kwargs):
+        if self.type_mouvement == 'entree':
+            self.article.stock += self.quantite
+        elif self.type_mouvement == 'sortie':
+            if self.quantite > self.article.stock:
+                raise ValueError("Stock insuffisant")
+            self.article.stock -= self.quantite
+        self.article.save()
+        super().save(*args, **kwargs)
+class DemandeArticle(models.Model):
+    STATUT_CHOICES = [
+        ('en_attente', 'En attente'),
+        ('approuvee', 'Approuvée'),
+        ('refusee', 'Refusée'),
+    ]
 
+    employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'role': 'employe'})
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    quantite = models.PositiveIntegerField()
+    # Si tu as un modèle Categorie, garde-le, sinon retire ce champ :
+    date_demande = models.DateTimeField(auto_now_add=True)
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
+
+    def __str__(self):
+        return f"{self.article.nom} ({self.quantite}) par {self.employe.username}"

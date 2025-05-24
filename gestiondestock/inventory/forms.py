@@ -9,9 +9,9 @@ from .models import Commande, Avoir
 from django import forms
 from django.contrib.auth import get_user_model
 from .models import Fournisseur
-
-
-
+from django import forms
+from .models import MouvementStock
+from .models import DemandeArticle 
 
 
 # Formulaire Article
@@ -138,3 +138,12 @@ class FournisseurUserForm(forms.Form):
     nom = forms.CharField(label="Nom du fournisseur", max_length=100)
     contact = forms.CharField(label="Contact", max_length=20)
     adresse = forms.CharField(label="Adresse", max_length=255, required=False)
+
+class MouvementStockForm(forms.ModelForm):
+    class Meta:
+        model = MouvementStock
+        fields = ['article', 'quantite', 'motif']
+class DemandeArticleForm(forms.ModelForm):
+     class Meta:
+            model = DemandeArticle
+            fields = ['article', 'quantite']

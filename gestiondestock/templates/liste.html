@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Demandes des employés</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+  <h2 class="mb-4"><i class="fas fa-clipboard-list me-2"></i>Demandes des employés</h2>
+  
+  <!-- Filtres statut -->
+  <form method="get" class="mb-3 d-flex gap-2">
+    <select name="statut" class="form-select w-auto">
+      <option value="">Tous statuts</option>
+      <option value="en_attente" {% if statut == 'en_attente' %}selected{% endif %}>En attente</option>
+      <option value="approuvee" {% if statut == 'approuvee' %}selected{% endif %}>Approuvée</option>
+      <option value="refusee" {% if statut == 'refusee' %}selected{% endif %}>Refusée</option>
+    </select>
+    <button class="btn btn-primary">Filtrer</button>
+  </form>
+  
+  <table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Employé</th>
+        <th>Article</th>
+        <th>Quantité</th>
+        <th>Date</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for demande in demandes %}
+      <tr>
+        <td>{{ demande.employe.username }}</td>
+        <td>{{ demande.article.nom }}</td>
+        <td>{{ demande.quantite }}</td>
+        <td>{{ demande.date_demande|date:"d/m/Y H:i" }}</td>
+        <td>
+          {% if demande.statut == 'en_attente' %}
+            <span class="badge bg-warning text-dark">En attente</span>
+          {% elif demande.statut == 'approuvee' %}
+            <span class="badge bg-success">Approuvée</span>
+          {% else %}
+            <span class="badge bg-danger">Refusée</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="text-center text-muted">Aucune demande à afficher.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

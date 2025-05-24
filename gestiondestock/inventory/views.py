@@ -32,16 +32,19 @@ from django.utils import timezone
 from datetime import timedelta
 from .forms import FournisseurUserForm
 from django.contrib.auth import get_user_model
+from .models import Article, MouvementStock
+from .forms import MouvementStockForm
 
 AvoirFormSet = inlineformset_factory(Commande, Avoir, fields=('article','quantite'), extra=1, can_delete=True)
 from .models import (
     Article, Stock, Fournisseur, Commande, Avoir,
-    Message, CustomUser, UserProfile, TwoFactorCode,
+    Message, CustomUser, UserProfile, TwoFactorCode,DemandeArticle,
 )
 from .forms import (
     ArticleForm, 
     CommandeForm, BaseAvoirFormSet,
-    EmailVerificationForm, OTPVerificationForm
+    EmailVerificationForm, OTPVerificationForm,DemandeArticleForm,
+
 )
 from .utils import generate_report
 
@@ -432,3 +435,67 @@ def stats_commandes_par_fournisseur(request):
         'labels': [f.nom for f in qs],
         'data': [f.nb for f in qs]
     })
+from django.shortcuts import render, redirect
+
+def nouvelle_entree(request):
+    if request.method == 'POST':
+        form = MouvementStockForm(request.POST)
+        if form.is_valid():
+            mouvement = form.save(commit=False)
+            mouvement.type_mouvement = 'entree'
+            mouvement.utilisateur = request.user
+            mouvement.save()
+            # Redirige vers le dashboard du gestionnaire
+            return redirect('dashboard_gestionnaire')
+    else:
+        form = MouvementStockForm()
+    return render(request, 'nouvelle_entree.html', {'form': form})
+
+def nouvelle_sortie(request):
+    if request.method == 'POST':
+        form = MouvementStockForm(request.POST)
+        if form.is_valid():
+            mouvement = form.save(commit=False)
+            mouvement.type_mouvement = 'sortie'
+            mouvement.utilisateur = request.user
+            mouvement.save()
+            # Redirige vers le dashboard du gestionnaire
+            return redirect('dashboard_gestionnaire')
+    else:
+        form = MouvementStockForm()
+    return render(request, 'nouvelle_sortie.html', {'form': form})
+def faire_demande(request):
+    if request.method == 'POST':
+        form = DemandeArticleForm(request.POST)
+        if form.is_valid():
+            demande = form.save(commit=False)
+            demande.employe = request.user
+            demande.save()
+            return redirect('mes_demandes')  # ou la page de ton choix
+    else:
+        form = DemandeArticleForm()
+    return render(request, 'faire_demande.html', {'form': form})
+@login_required
+def mes_demandes(request):
+    demandes = DemandeArticle.objects.filter(employe=request.user)
+    return render(request, 'mes_demandes.html', {'demandes': demandes})
+
+def is_gestionnaire(user):
+    return user.role == 'gestionnaire' or user.role == 'admin'
+
+@login_required
+@user_passes_test(is_gestionnaire)
+def liste_demandes(request):
+    # Toutes les demandes, du plus récent au plus ancien
+    demandes = DemandeArticle.objects.select_related('article', 'employe').order_by('-date_demande')
+
+    # Filtre par statut si demandé (ex : ?statut=en_attente)
+    statut = request.GET.get('statut')
+    if statut:
+        demandes = demandes.filter(statut=statut)
+
+    context = {
+        "demandes": demandes,
+        "statut": statut,
+    }
+    return render(request, "liste.html", context) 

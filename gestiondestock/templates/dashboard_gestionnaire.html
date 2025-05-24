@@ -187,7 +187,56 @@
     </div>
   </div>
 </div>
-
+<div class="row g-4 mb-4">
+  <!-- Entrée de stock -->
+  <div class="col-md-4">
+    <div class="card h-100 border-success">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title text-success">
+          <i class="fas fa-arrow-down me-2"></i>Entrée de stock
+        </h5>
+        <p class="card-text flex-grow-1">
+          Enregistrez l’arrivée de nouveaux articles ou des retours.
+        </p>
+        <a href="{% url 'nouvelle_entree' %}" class="btn btn-success btn-dashboard mt-auto">
+          ➕ Nouvelle entrée
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Sortie de stock -->
+  <div class="col-md-4">
+    <div class="card h-100 border-danger">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title text-danger">
+          <i class="fas fa-arrow-up me-2"></i>Sortie de stock
+        </h5>
+        <p class="card-text flex-grow-1">
+          Saisissez les sorties pour livraisons, consommations ou pertes.
+        </p>
+        <a href="{% url 'nouvelle_sortie' %}" class="btn btn-danger btn-dashboard mt-auto">
+          ➖ Nouvelle sortie
+        </a>
+      </div>
+    </div>
+  </div>
+  <!-- Demandes des employés -->
+<div class="col-md-4">
+  <div class="card h-100 border-primary">
+    <div class="card-body d-flex flex-column">
+      <h5 class="card-title text-primary">
+        <i class="fas fa-clipboard-list me-2"></i>Demandes des employés
+      </h5>
+      <p class="card-text flex-grow-1">
+        Consultez, validez ou refusez les demandes d’articles émises par vos employés.
+      </p>
+      <a href="{% url 'liste_demandes' %}" class="btn btn-primary btn-dashboard mt-auto">
+        <i class="fas fa-eye me-1"></i> Voir les demandes
+      </a>
+    </div>
+  </div>
+</div>
     <!-- Statistiques clés -->
 
     <!-- Tableau rapide des 5 articles critiques -->

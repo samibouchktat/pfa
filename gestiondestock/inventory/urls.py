@@ -19,11 +19,12 @@ from .views import (
 
     # Messagerie
     msg, conversation,
+    nouvelle_sortie  , nouvelle_entree,faire_demande,mes_demandes,
 
     # Rapport IA
     report_ai_view,
     stats_articles_par_categorie,stats_top_articles,stats_mouvements_stock,
-    stats_articles_rupture, stats_commandes_par_fournisseur,render
+    stats_articles_rupture, stats_commandes_par_fournisseur,render,liste_demandes ,
 )
 
 urlpatterns = [
@@ -75,6 +76,11 @@ urlpatterns = [
 
 # Page HTML statistiques
     path('statistiques/', lambda r: render(r, "statistique.html"), name="statistique"),
-   
+    path('mouvements/entree/', nouvelle_entree, name='nouvelle_entree'),
+    path('mouvements/sortie/', nouvelle_sortie, name='nouvelle_sortie'),
+    path('employe/demande/', faire_demande, name='faire_demande'),
+    path('employe/mes-demandes/', mes_demandes, name='mes_demandes'),
+    # inventory/urls.py
+    path('demandes/', liste_demandes, name='liste_demandes'),
 
 ]
