@@ -1,6 +1,8 @@
 # gestiondestock/inventory/urls.py
 from .views import msg, conversation 
 from django.urls import path
+
+
 from .views import (
     # Authentification & profil
     home,
@@ -20,6 +22,8 @@ from .views import (
 
     # Rapport IA
     report_ai_view,
+    stats_articles_par_categorie,stats_top_articles,stats_mouvements_stock,
+    stats_articles_rupture, stats_commandes_par_fournisseur,render
 )
 
 urlpatterns = [
@@ -62,7 +66,15 @@ urlpatterns = [
     path('fournisseurs/<int:id>/modifier/', edit_fournisseur, name='edit_fournisseur'),
     path('fournisseurs/<int:id>/supprimer/', delete_fournisseur, name='delete_fournisseur'),
     
+    # URLs pour statistiques API
+    path('stats/articles-par-categorie/', stats_articles_par_categorie, name='stats_articles_par_categorie'),
+    path('stats/top-articles/', stats_top_articles, name='stats_top_articles'),
+    path('stats/mouvements-stock/', stats_mouvements_stock, name='stats_mouvements_stock'),
+    path('stats/articles-rupture/', stats_articles_rupture, name='stats_articles_rupture'),
+    path('stats/commandes-par-fournisseur/', stats_commandes_par_fournisseur, name='stats_commandes_par_fournisseur'),
 
+# Page HTML statistiques
+    path('statistiques/', lambda r: render(r, "statistique.html"), name="statistique"),
    
 
 ]

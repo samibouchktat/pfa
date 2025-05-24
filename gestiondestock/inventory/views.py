@@ -24,11 +24,19 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.decorators import login_required
 from django.db.models import F, Sum
 from django.contrib import messages
+from django.http import JsonResponse
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncDate
+from .models import Article, Fournisseur, Stock, Commande
+from django.utils import timezone
+from datetime import timedelta
+from .forms import FournisseurUserForm
+from django.contrib.auth import get_user_model
 
 AvoirFormSet = inlineformset_factory(Commande, Avoir, fields=('article','quantite'), extra=1, can_delete=True)
 from .models import (
     Article, Stock, Fournisseur, Commande, Avoir,
-    Message, CustomUser, UserProfile, TwoFactorCode
+    Message, CustomUser, UserProfile, TwoFactorCode,
 )
 from .forms import (
     ArticleForm, 
@@ -90,7 +98,6 @@ def log_out(request):
     return redirect('login')
 
 
-# Redirection selon rôle
 @login_required
 def redirect_dashboard(request):
     user = request.user
@@ -121,9 +128,16 @@ def dashboard_employe(request):
 def dashboard_admin(request):
     return render(request, 'dashboard_admin.html')
 
+from django.contrib import messages
+
 @login_required
 def dashboard_fournisseur(request):
-    fournisseur = Fournisseur.objects.get(user=request.user)
+    try:
+        fournisseur = Fournisseur.objects.get(user=request.user)
+    except Fournisseur.DoesNotExist:
+        messages.error(request, "Aucun fournisseur associé à ce compte utilisateur.")
+        return redirect('login')  # Ou vers une autre page d'accueil ou info
+
     commandes = Commande.objects.filter(fournisseur=fournisseur)
     
     # Filtrage
@@ -140,8 +154,8 @@ def dashboard_fournisseur(request):
     nb_refusees = commandes.filter(etat="refusée").count()
     nb_total = commandes.count()
     montant_total = commandes.annotate(
-    total=Sum(F('articles_commande__quantite') * F('articles_commande__article__prix'))
-).aggregate(m=Sum('total'))['m']
+        total=Sum(F('articles_commande__quantite') * F('articles_commande__article__prix'))
+    ).aggregate(m=Sum('total'))['m']
 
     context = {
         "fournisseur": fournisseur,
@@ -153,6 +167,7 @@ def dashboard_fournisseur(request):
         "montant_total": montant_total,
     }
     return render(request, "dashboard_fournisseur.html", context)
+
 # CRUD Articles
 @login_required
 def liste_articles(request):
@@ -320,20 +335,30 @@ def is_gestionnaire(user):
 def fournisseur_list(request):
     fournisseurs = Fournisseur.objects.all()
     return render(request, 'fournisseur_list.html', {'fournisseurs': fournisseurs})
-
-@login_required
-@user_passes_test(is_gestionnaire)
 def add_fournisseur(request):
     if request.method == "POST":
-        form = FournisseurForm(request.POST)
+        form = FournisseurUserForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Fournisseur ajouté.")
+            data = form.cleaned_data
+            User = get_user_model()
+            user = User.objects.create_user(
+                username=data['username'],
+                password=data['password'],
+                email=data['email'],
+                role='fournisseur'
+            )
+            Fournisseur.objects.create(
+                user=user,  # On lie le fournisseur au user créé
+                nom=data['nom'],
+                contact=data['contact'],
+                email=data['email'],
+                adresse=data['adresse']
+            )
+            messages.success(request, "Fournisseur et compte utilisateur créés.")
             return redirect('fournisseur_list')
     else:
-        form = FournisseurForm()
+        form = FournisseurUserForm()
     return render(request, 'add_fournisseur.html', {'form': form})
-
 @login_required
 @user_passes_test(is_gestionnaire)
 def edit_fournisseur(request, id):
@@ -358,3 +383,52 @@ def delete_fournisseur(request, id):
         return redirect('fournisseur_list')
     return render(request, 'delete_fournisseur.html', {'fournisseur': fournisseur})
 
+@login_required
+def stats_articles_par_categorie(request):
+    data = (
+        Article.objects.values('categorie')  # adapte selon ton modèle
+        .annotate(nombre=Count('id'))
+        .order_by('-nombre')
+    )
+    categories = [d['categorie'] or 'Sans catégorie' for d in data]
+    quantites = [d['nombre'] for d in data]
+    return JsonResponse({'labels': categories, 'data': quantites})
+
+@login_required
+def stats_top_articles(request):
+    articles = Article.objects.order_by('-quantite')[:10]
+    return JsonResponse({
+        'labels': [a.nom for a in articles],
+        'data': [a.quantite for a in articles]
+    })
+
+@login_required
+def stats_mouvements_stock(request):
+    nb_jours = int(request.GET.get('jours', 7))
+    stocks = (
+        Stock.objects.filter(date_entree__gte=timezone.now() - timedelta(days=nb_jours))
+        .annotate(day=TruncDate('date_entree'))
+        .values('day')
+        .annotate(entrees=Sum('entree'), sorties=Sum('sortie'))
+        .order_by('day')
+    )
+    labels = [str(x['day']) for x in stocks]
+    entrees = [x['entrees'] or 0 for x in stocks]
+    sorties = [x['sorties'] or 0 for x in stocks]
+    return JsonResponse({'labels': labels, 'entrees': entrees, 'sorties': sorties})
+
+@login_required
+def stats_articles_rupture(request):
+    ruptures = Article.objects.filter(stock=0)
+    return JsonResponse({
+        'labels': [a.nom for a in ruptures],
+        'data': [a.stock for a in ruptures]
+    })
+
+@login_required
+def stats_commandes_par_fournisseur(request):
+    qs = Fournisseur.objects.annotate(nb=Count('commande')).order_by('-nb')
+    return JsonResponse({
+        'labels': [f.nom for f in qs],
+        'data': [f.nb for f in qs]
+    })

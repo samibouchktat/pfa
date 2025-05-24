@@ -179,41 +179,16 @@
         <p class="card-text flex-grow-1">
           Visualisez des courbes et graphiques sur l'activité (bientôt disponible).
         </p>
-        <a href="#" class="btn btn-dark btn-dashboard mt-auto disabled" tabindex="-1" aria-disabled="true">
+        <a href="{% url 'statistique' %}" class="btn btn-dark btn-dashboard mt-auto">
           Voir les statistiques
         </a>
+
       </div>
     </div>
   </div>
 </div>
 
     <!-- Statistiques clés -->
-    <div class="row g-4 mb-5">
-      <div class="col-lg-4 col-sm-6">
-        <div class="stat-box">
-          <div class="stat-number">{{ stats.totalArticles }}</div>
-          <div class="stat-label">Articles Totaux</div>
-        </div>
-      </div>
-      <div class="col-lg-4 col-sm-6">
-        <div class="stat-box">
-          <div class="stat-number">{{ stats.stockDisponible }}</div>
-          <div class="stat-label">Stock Disponible</div>
-        </div>
-      </div>
-      <div class="col-lg-4 col-sm-6">
-        <div class="stat-box">
-          <div class="stat-number">{{ stats.ruptures }}</div>
-          <div class="stat-label text-danger">Articles en rupture</div>
-        </div>
-      </div>
-      <div class="col-lg-4 col-sm-6">
-        <div class="stat-box">
-          <div class="stat-number">{{ stats.cmdEnAttente }}</div>
-          <div class="stat-label text-warning">Commandes en attente</div>
-        </div>
-      </div>
-    </div>
 
     <!-- Tableau rapide des 5 articles critiques -->
     {% if low_stock_items %}

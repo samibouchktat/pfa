@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-     'inventory',
+    'inventory',
     'widget_tweaks',
     'accounts',
 
@@ -117,6 +117,6 @@ EMAIL_HOST_PASSWORD = 'pkbg aerr avpz rzvt'  # <= celui généré par Google !
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 AUTHENTICATION_BACKENDS = [
+    'inventory.authentication.EmailOrSecondaryEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
-    'inventory.auth_backend.MultiEmailBackend',  # chemin à adapter
 ]

@@ -8,6 +8,9 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Q
+from django.contrib.auth.models import AbstractUser
+
+
 # Utilisateur personnalisé avec rôles
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
@@ -18,13 +21,18 @@ class CustomUser(AbstractUser):
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    secondary_email = models.EmailField(blank=True, null=True, unique=True)
+    secondary_email = models.EmailField("Email secondaire (2FA)", blank=True, null=True, unique=True)
+
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
-
 # Fournisseur
 class Fournisseur(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'fournisseur'}, related_name='fournisseur_profile')
+    user = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE,
+        limit_choices_to={'role': 'fournisseur'},
+        related_name='fournisseur_profile',
+        null=True, blank=True  # ← autorise les fournisseurs sans user
+    )
     nom     = models.CharField(max_length=100)
     contact = models.CharField(max_length=20)
     email   = models.EmailField(unique=True)
@@ -32,6 +40,7 @@ class Fournisseur(models.Model):
 
     def __str__(self):
         return self.nom
+
 
 # Article
 class Article(models.Model):
@@ -161,20 +170,5 @@ def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):
         instance.profile.save()
 
-from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth import get_user_model
 
-class EmailOrSecondaryEmailBackend(ModelBackend):
-    def authenticate(self, request, username=None, password=None, **kwargs):
-        UserModel = get_user_model()
-        try:
-            user = UserModel.objects.get(
-                Q(email__iexact=username) |
-                Q(username__iexact=username) |
-                Q(secondary_email__iexact=username)
-            )
-        except UserModel.DoesNotExist:
-            return None
-        if user.check_password(password):
-            return user
-        return None
+

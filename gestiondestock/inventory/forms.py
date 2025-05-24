@@ -6,6 +6,10 @@ from .utils import envoyer_sms  # Fonction d'envoi
 from .models import UserProfile
 from django.forms.models import BaseInlineFormSet
 from .models import Commande, Avoir
+from django import forms
+from django.contrib.auth import get_user_model
+from .models import Fournisseur
+
 
 
 
@@ -15,7 +19,7 @@ class ArticleForm(forms.ModelForm):
     class Meta:
         model = Article
         # Spécifie explicitement les champs existants
-        fields = ['nom', 'reference', 'description', 'prix', 'quantite', 'stock']
+        fields = ['nom', 'reference', 'description', 'prix', 'quantite']
         widgets = {
             'nom': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -120,8 +124,17 @@ class EmailVerificationForm(forms.Form):
 class OTPVerificationForm(forms.Form):
     code = forms.CharField(label="Code de vérification", max_length=6)
 
-    
 class FournisseurForm(forms.ModelForm):
     class Meta:
         model = Fournisseur
-        fields = ['user', 'nom', 'contact', 'email', 'adresse']
+        fields = ['nom', 'contact', 'email', 'adresse']
+
+User = get_user_model()
+
+class FournisseurUserForm(forms.Form):
+    username = forms.CharField(label="Nom d'utilisateur", max_length=150)
+    password = forms.CharField(label="Mot de passe", widget=forms.PasswordInput)
+    email = forms.EmailField(label="Email")
+    nom = forms.CharField(label="Nom du fournisseur", max_length=100)
+    contact = forms.CharField(label="Contact", max_length=20)
+    adresse = forms.CharField(label="Adresse", max_length=255, required=False)
