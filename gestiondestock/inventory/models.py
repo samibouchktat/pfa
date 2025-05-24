@@ -7,7 +7,7 @@ from datetime import timedelta
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
+from django.db.models import Q
 # Utilisateur personnalisé avec rôles
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
@@ -18,7 +18,7 @@ class CustomUser(AbstractUser):
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-
+    secondary_email = models.EmailField(blank=True, null=True, unique=True)
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
 
@@ -116,9 +116,14 @@ class Message(models.Model):
 
 # 2FA
 class TwoFactorCode(models.Model):
-    user            = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    code            = models.CharField(max_length=6)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
     expiration_time = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        from django.utils import timezone
+        return not self.is_used and self.expiration_time > timezone.now()
 
     def is_expired(self):
         return timezone.now() > self.expiration_time
@@ -156,3 +161,20 @@ def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):
         instance.profile.save()
 
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth import get_user_model
+
+class EmailOrSecondaryEmailBackend(ModelBackend):
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        UserModel = get_user_model()
+        try:
+            user = UserModel.objects.get(
+                Q(email__iexact=username) |
+                Q(username__iexact=username) |
+                Q(secondary_email__iexact=username)
+            )
+        except UserModel.DoesNotExist:
+            return None
+        if user.check_password(password):
+            return user
+        return None

@@ -111,47 +111,81 @@
   <main class="container">
 
     <!-- Cartes d’accès rapide -->
-    <div class="row g-4 mb-5">
-      <div class="col-md-4">
-        <div class="card h-100">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title"><i class="fas fa-box-open me-2"></i>Produits</h5>
-            <p class="card-text flex-grow-1">Ajoutez, modifiez ou supprimez vos articles.</p>
-            <a href="{% url 'product_list' %}" class="btn btn-primary btn-dashboard mt-auto">Voir les produits</a>
-          </div>
-        </div>
+<div class="row g-4 mb-4">
+  <!-- Ligne 1 -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title"><i class="fas fa-box-open me-2"></i>Produits</h5>
+        <p class="card-text flex-grow-1">Ajoutez, modifiez ou supprimez vos articles.</p>
+        <a href="{% url 'product_list' %}" class="btn btn-primary btn-dashboard mt-auto">Voir les produits</a>
       </div>
-     <div class="col-md-4">
-  <div class="card h-100">
-    <div class="card-body d-flex flex-column">
-      <h5 class="card-title"><i class="fas fa-shopping-cart me-2"></i>Commandes</h5>
-      <p class="card-text flex-grow-1">Suivez et gérez vos commandes en temps réel.</p>
-      <a href="{% url 'commande_list' %}" class="btn btn-success btn-dashboard mt-auto">Voir les commandes</a>
-      <a href="{% url 'add_commande' %}" class="btn btn-outline-primary btn-dashboard mt-2">Nouvelle commande</a>
     </div>
   </div>
-</div>
-<div class="col-md-4">
-  <div class="card h-100">
-    <div class="card-body d-flex flex-column">
-      <h5 class="card-title"><i class="fas fa-truck me-2"></i>Fournisseurs</h5>
-      <p class="card-text flex-grow-1">Gérez vos fournisseurs : ajout, modification, suppression.</p>
-      <a href="{% url 'fournisseur_list' %}" class="btn btn-info btn-dashboard mt-auto">Voir les fournisseurs</a>
-      <a href="{% url 'add_fournisseur' %}" class="btn btn-outline-success btn-dashboard mt-2">Nouveau fournisseur</a>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title"><i class="fas fa-shopping-cart me-2"></i>Commandes</h5>
+        <p class="card-text flex-grow-1">Suivez et gérez vos commandes en temps réel.</p>
+        <a href="{% url 'commande_list' %}" class="btn btn-success btn-dashboard mt-auto">Voir les commandes</a>
+        <a href="{% url 'add_commande' %}" class="btn btn-outline-primary btn-dashboard mt-2">Nouvelle commande</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title"><i class="fas fa-truck me-2"></i>Fournisseurs</h5>
+        <p class="card-text flex-grow-1">Gérez vos fournisseurs : ajout, modification, suppression.</p>
+        <a href="{% url 'fournisseur_list' %}" class="btn btn-info btn-dashboard mt-auto">Voir les fournisseurs</a>
+        <a href="{% url 'add_fournisseur' %}" class="btn btn-outline-success btn-dashboard mt-2">Nouveau fournisseur</a>
+      </div>
     </div>
   </div>
 </div>
 
-      <div class="col-md-4">
-        <div class="card h-100">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Rapports</h5>
-            <p class="card-text flex-grow-1">Consultez les statistiques et recommandations IA.</p>
-            <a href="{% url 'report_ai' %}" class="btn btn-warning btn-dashboard mt-auto">Voir les rapports</a>
-          </div>
-        </div>
+<div class="row g-4 mb-5">
+  <!-- Ligne 2 -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Rapports</h5>
+        <p class="card-text flex-grow-1">Consultez les statistiques et recommandations IA.</p>
+        <a href="{% url 'report_ai' %}" class="btn btn-warning btn-dashboard mt-auto">Voir les rapports</a>
       </div>
     </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title"><i class="fas fa-envelope-open-text me-2"></i>Email secondaire (2FA)</h5>
+        <p class="card-text flex-grow-1">
+          Ajoutez ou vérifiez votre email secondaire pour activer la double authentification.
+        </p>
+        <a href="{% url 'complete_profile' %}" class="btn btn-secondary btn-dashboard mt-auto">
+          {% if request.user.secondary_email %}
+            Modifier mon email 2FA
+          {% else %}
+            Vérifier mon email (2FA)
+          {% endif %}
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title"><i class="fas fa-chart-bar me-2"></i>Statistiques</h5>
+        <p class="card-text flex-grow-1">
+          Visualisez des courbes et graphiques sur l'activité (bientôt disponible).
+        </p>
+        <a href="#" class="btn btn-dark btn-dashboard mt-auto disabled" tabindex="-1" aria-disabled="true">
+          Voir les statistiques
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Statistiques clés -->
     <div class="row g-4 mb-5">

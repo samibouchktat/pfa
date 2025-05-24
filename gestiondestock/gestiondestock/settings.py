@@ -107,11 +107,16 @@ DEBUG = env.bool("DEBUG", default=True)
 
 # 3) Email (toujours SMTP Gmail)
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST    = "smtp.gmail.com"
-EMAIL_PORT    = 587
-EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER     = env("GMAIL_USER")
-EMAIL_HOST_PASSWORD = env("GMAIL_APP_PASSWORD")
-DEFAULT_FROM_EMAIL  = EMAIL_HOST_USER
 AUTH_USER_MODEL = 'inventory.CustomUser'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'gestiondestock0@gmail.com'
+EMAIL_HOST_PASSWORD = 'pkbg aerr avpz rzvt'  # <= celui généré par Google !
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'inventory.auth_backend.MultiEmailBackend',  # chemin à adapter
+]

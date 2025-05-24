@@ -3,6 +3,7 @@ from .views import msg, conversation
 from django.urls import path
 from .views import (
     # Authentification & profil
+    home,
     login_view, log_out, redirect_dashboard,
     dashboard_gestionnaire, dashboard_employe, dashboard_admin,
     complete_profile, 
@@ -23,9 +24,10 @@ from .views import (
 
 urlpatterns = [
     # Authentification
-    path('login/',  login_view,         name='login'),
+    path('login/',  login_view,         name='login'), 
     path('logout/', log_out, name='log_out'),
-    path('',        redirect_dashboard, name='home'),
+    path('', home, name='home'),  # page d'accueil du site (landing page)
+    path('redirect-dashboard/', redirect_dashboard, name='redirect_dashboard'),
     path('dashboard/gest/',  dashboard_gestionnaire, name='dashboard_gestionnaire'),
     path('dashboard/emp/',   dashboard_employe,      name='dashboard_employe'),
     path('dashboard/admin/', dashboard_admin,        name='dashboard_admin'),
@@ -59,6 +61,8 @@ urlpatterns = [
     path('fournisseurs/ajouter/', add_fournisseur, name='add_fournisseur'),
     path('fournisseurs/<int:id>/modifier/', edit_fournisseur, name='edit_fournisseur'),
     path('fournisseurs/<int:id>/supprimer/', delete_fournisseur, name='delete_fournisseur'),
+    
+
    
 
 ]

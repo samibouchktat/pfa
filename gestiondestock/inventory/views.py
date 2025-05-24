@@ -23,7 +23,7 @@ from .forms import FournisseurForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.decorators import login_required
 from django.db.models import F, Sum
-
+from django.contrib import messages
 
 AvoirFormSet = inlineformset_factory(Commande, Avoir, fields=('article','quantite'), extra=1, can_delete=True)
 from .models import (
@@ -244,24 +244,27 @@ def complete_profile(request):
             )
             return render(request, 'complete_profile.html', {'step':'verify','email': email,'form': OTPVerificationForm()})
         return render(request, 'complete_profile.html', {'step':'email','form': form})
+
     # Étape 2: vérification code
     email = request.session.get('otp_email')
     form = OTPVerificationForm(request.POST or None)
-    if request.method=='POST' and form.is_valid():
+    if request.method == 'POST' and form.is_valid():
         code = form.cleaned_data['code']
         try:
             otp = TwoFactorCode.objects.get(user=request.user, code=code, is_used=False)
             if otp.is_valid():
-                otp.is_used=True
+                otp.is_used = True
                 otp.save()
+                user = request.user
+                user.secondary_email = email     # <-- On stocke l'email validé
+                user.save()
                 del request.session['otp_email']
+                messages.success(request, f"L'email de vérification {email} a été ajouté à votre compte. Vous pourrez vous connecter avec cet email ou celui donné par l'administrateur.")
                 return redirect('redirect_dashboard')
-            form.add_error('code','Ce code a expiré.')
+            form.add_error('code', 'Ce code a expiré.')
         except TwoFactorCode.DoesNotExist:
-            form.add_error('code','Code invalide ou déjà utilisé.')
-    return render(request, 'complete_profile.html', {'step':'verify','email': email,'form': form})
-
-
+            form.add_error('code', 'Code invalide ou déjà utilisé.')
+    return render(request, 'complete_profile.html', {'step': 'verify', 'email': email, 'form': form})
 # Rapport IA
 @login_required
 @user_passes_test(is_manager)

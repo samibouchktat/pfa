@@ -1,56 +1,64 @@
-{% load widget_tweaks %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Compléter votre profil</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
-        rel="stylesheet">
-  <style>
-    body { background: #f4f6f9; font-family: Arial, sans-serif; }
-    .container { max-width: 500px; margin: 80px auto; padding: 30px;
-                 background: #fff; border-radius: 8px;
-                 box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h1 { text-align: center; margin-bottom: 1.5rem; color: #343a40; }
-    .form-control { border-radius: 4px; }
-    .btn-primary { width: 100%; padding: .75rem; font-size: 1rem; }
-    .highlight-yellow { background-color: #fffacd; text-decoration: underline; }
-    .text-center a { color: #007bff; text-decoration: none; }
-    .text-center a:hover { text-decoration: underline; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Vérification du profil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .box {
+            max-width: 430px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 1.2rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,.06);
+        }
+        .logo { width: 48px; margin-bottom: 1rem; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Compléter votre profil</h1>
+<div class="box">
+    <div class="text-center">
+       
+        <h3 class="mb-2">Vérification de votre profil</h3>
+        <p class="text-muted">Veuillez compléter votre profil pour accéder à la plateforme.</p>
+    </div>
 
-    {% if step == "email" %}
-      <p class="text-muted">Veuillez entrer votre adresse email ; vous recevrez un code de vérification.</p>
-      <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label for="id_email" class="form-label">Adresse email</label>
-          {{ form.email|add_class:"form-control highlight-yellow" }}
-        </div>
-        <button type="submit" class="btn btn-primary">Envoyer le code</button>
-      </form>
-
-    {% elif step == "verify" %}
-      <p class="text-muted">Un code a été envoyé à <strong>{{ email }}</strong>. Vérifiez votre boîte mail.</p>
-      <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="email" value="{{ email }}">
-        <div class="mb-3">
-          <label for="id_code" class="form-label">Code de vérification</label>
-          {{ form.code|add_class:"form-control highlight-yellow" }}
-        </div>
-        <button type="submit" class="btn btn-primary">Vérifier le code</button>
-      </form>
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-success">{{ message }}</div>
+      {% endfor %}
     {% endif %}
 
-    
-  </div>
+    {% if step == 'email' %}
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Votre adresse e-mail</label>
+                {{ form.email }}
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Recevoir mon code</button>
+        </form>
+    {% elif step == 'verify' %}
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Code reçu par e-mail ({{ email }})</label>
+               {{ form.code }}
+
+                {% if form.code.errors %}
+                    <div class="text-danger small">{{ form.code.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-success w-100">Valider le code</button>
+        </form>
+        <div class="mt-3 text-center">
+            <a href="{% url 'complete_profile' %}" class="text-secondary small">Changer d’adresse e-mail</a>
+        </div>
+    {% endif %}
+</div>
 </body>
 </html>
