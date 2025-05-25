@@ -147,3 +147,7 @@ class DemandeArticleForm(forms.ModelForm):
      class Meta:
             model = DemandeArticle
             fields = ['article', 'quantite']
+class MouvementForm(forms.ModelForm):
+    class Meta:
+        model = MouvementStock
+        fields = ['article', 'quantite', 'motif']  # ← Mets ici UNIQUEMENT les champs de ton modèle

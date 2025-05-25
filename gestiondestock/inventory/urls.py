@@ -8,7 +8,8 @@ from .views import (
     home,
     login_view, log_out, redirect_dashboard,
     dashboard_gestionnaire, dashboard_employe, dashboard_admin,
-    complete_profile, 
+    dashboard_fournisseur, autocomplete_product_names,
+    complete_profile,export_articles,
 
     # Articles
     liste_articles, add_product, edit_product, delete_product,
@@ -18,7 +19,7 @@ from .views import (
     # Fournisseurs
 
     # Messagerie
-    msg, conversation,
+    msg, conversation,validate_product_field,
     nouvelle_sortie  , nouvelle_entree,faire_demande,mes_demandes,
 
     # Rapport IA
@@ -82,5 +83,7 @@ urlpatterns = [
     path('employe/mes-demandes/', mes_demandes, name='mes_demandes'),
     # inventory/urls.py
     path('demandes/', liste_demandes, name='liste_demandes'),
-
+    path('articles/export/<str:format>/', export_articles, name='export_articles'),
+    path('autocomplete-product-names/', autocomplete_product_names, name='autocomplete_product_names'),
+    path('articles/validate-field/', validate_product_field, name='validate_product_field'),
 ]

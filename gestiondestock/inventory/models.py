@@ -51,11 +51,14 @@ class Article(models.Model):
     quantite  = models.IntegerField(default=0, help_text="Quantité réelle en stock")
     stock     = models.IntegerField(default=0, help_text="Stock calculé ou ajusté manuellement")
     description = models.TextField(blank=True, default="")
-   
+    facteur_co2 = models.FloatField(
+        default=0.0,
+        verbose_name="Facteur d'émission CO₂ (kg/unit)",
+        help_text="Renseigne le facteur d’émission de CO₂ pour ce produit (ADEME ou estimation, en kg par unité)"
+    )
     stock_min = models.PositiveIntegerField(default=1)
     def __str__(self):
         return f"{self.nom} ({self.reference})"
-
     def update_stock(self):
         """
         Calcule le stock actuel à partir des mouvements liés.
@@ -213,3 +216,4 @@ class DemandeArticle(models.Model):
 
     def __str__(self):
         return f"{self.article.nom} ({self.quantite}) par {self.employe.username}"
+

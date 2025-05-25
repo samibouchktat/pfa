@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'inventory',
     'widget_tweaks',
     'accounts',
+    'carbone',
 
 ]
 

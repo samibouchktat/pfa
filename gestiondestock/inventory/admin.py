@@ -12,9 +12,17 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Rôle utilisateur', {'fields': ('role',)}),
     )
+    # inventory/admin.py
+from .models import Article
+
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ("nom", "quantite", "facteur_co2")
+    search_fields = ("nom",)
+
 
 admin.site.register(CustomUser, CustomUserAdmin)
-admin.site.register(Article)
+
 admin.site.register(Fournisseur)
 admin.site.register(Commande)
 admin.site.register(Avoir)

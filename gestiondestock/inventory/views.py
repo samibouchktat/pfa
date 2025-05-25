@@ -34,7 +34,15 @@ from .forms import FournisseurUserForm
 from django.contrib.auth import get_user_model
 from .models import Article, MouvementStock
 from .forms import MouvementStockForm
-
+from django.http import HttpResponse
+import pandas as pd
+from .forms import MouvementForm
+        # Simple PDF via pandas pour dépanner, version professionnelle sur demande
+import io
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+from .models import Article
+from django.http import JsonResponse
 AvoirFormSet = inlineformset_factory(Commande, Avoir, fields=('article','quantite'), extra=1, can_delete=True)
 from .models import (
     Article, Stock, Fournisseur, Commande, Avoir,
@@ -499,3 +507,85 @@ def liste_demandes(request):
         "statut": statut,
     }
     return render(request, "liste.html", context) 
+def export_articles(request, format):
+    articles = Article.objects.all()
+    # Si tu veux filtrer selon la recherche :
+    search = request.GET.get('search')
+    if search:
+        articles = articles.filter(nom__icontains=search) | articles.filter(reference__icontains=search)
+    
+    data = []
+    for art in articles:
+        data.append({
+            "Nom": art.nom,
+            "Référence": art.reference,
+            "Prix": art.prix,
+            "Quantité": art.quantite,
+        })
+    df = pd.DataFrame(data)
+
+    if format == "excel":
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="articles.xlsx"'
+        df.to_excel(response, index=False)
+        return response
+
+    elif format == "pdf":
+        # Simple PDF via pandas pour dépanner, version professionnelle sur demande
+        import io
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+        from reportlab.lib import colors
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer)
+        elements = []
+        table_data = [df.columns.tolist()] + df.values.tolist()
+        t = Table(table_data)
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0d6efd")),
+            ('TEXTCOLOR',(0,0),(-1,0),colors.white),
+            ('ALIGN',(0,0),(-1,-1),'CENTER'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0,0), (-1,0), 10),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ]))
+        elements.append(t)
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="articles.pdf"'
+        response.write(pdf)
+        return response
+
+    else:
+        return HttpResponse("Format inconnu", status=400)
+def autocomplete_product_names(request):
+    q = request.GET.get('q', '')
+    if q:
+        results = list(Article.objects.filter(nom__icontains=q).values_list('nom', flat=True)[:10])
+    else:
+        results = []
+    return JsonResponse({'results': results})
+
+def validate_product_field(request):
+    # Exemple basique à adapter
+    if request.method == "POST":
+        field_name = list(request.POST.keys())[0]
+        value = request.POST[field_name]
+        error = ""
+
+        # Validation selon le champ
+        if field_name == "prix":
+            try:
+                val = float(value)
+                if val <= 0:
+                    error = "Le prix doit être positif."
+            except:
+                error = "Prix invalide."
+        if field_name == "nom":
+            if len(value) < 2:
+                error = "Nom trop court."
+        # Ajoute d'autres règles ici...
+
+        return JsonResponse({"error": error})
+    return JsonResponse({"error": "Méthode non autorisée."}, status=405)

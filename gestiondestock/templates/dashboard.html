@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Tableau de bord Carbone & RSE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 5 & FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: #202124;
+      color: #e5e7eb;
+      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+      min-height: 100vh;
+    }
+    .navbar {
+      background: #181A1B;
+      border-bottom: 1.5px solid #27292d;
+      box-shadow: 0 2px 8px #1115;
+    }
+    .navbar-brand {
+      font-weight: 700;
+      color: #49cc90 !important;
+      letter-spacing: 1.3px;
+      font-size: 1.45rem;
+    }
+    .btn-outline-light {
+      border-color: #49cc90;
+      color: #49cc90;
+      font-weight: 600;
+      transition: all .18s;
+    }
+    .btn-outline-light:hover {
+      background: #49cc90;
+      color: #181A1B;
+    }
+    .dashboard-header {
+      background: #232426;
+      border-radius: 1.1rem;
+      margin: 45px 0 28px 0;
+      padding: 2.3rem 1.6rem 1.7rem 1.6rem;
+      box-shadow: 0 2px 20px #0008;
+      text-align: center;
+    }
+    .dashboard-header h1 {
+      color: #49cc90;
+      font-weight: 700;
+      font-size: 2.15rem;
+      margin-bottom: .5rem;
+      letter-spacing: 0.5px;
+    }
+    .dashboard-header p {
+      color: #b8bcc2;
+      font-size: 1.12rem;
+      margin-bottom: 0;
+    }
+    .plotly-graph {
+      background: #1b1d1f;
+      border-radius: 1.2rem;
+      padding: 1.4rem 1.1rem;
+      margin-bottom: 2.8rem;
+      box-shadow: 0 4px 26px #49cc9030;
+    }
+    .card-green {
+      background: linear-gradient(120deg, #222f24 75%, #27392d 100%);
+      border-left: 5px solid #49cc90;
+      color: #49cc90;
+      border-radius: 1.1rem;
+    }
+    .card-eco {
+      background: linear-gradient(120deg, #232426 70%, #1b1d1f 100%);
+      border-left: 5px solid #6b7280;
+      color: #e5e7eb;
+      border-radius: 1.1rem;
+    }
+    .card-title {
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .card i {
+      margin-right: 7px;
+      font-size: 1.2rem;
+    }
+    footer {
+      color: #49cc90;
+      padding: 1.3rem 0 1rem 0;
+      background: transparent;
+      font-size: 1.1rem;
+      margin-top: 3.2rem;
+      border-top: 1px solid #23242655;
+    }
+    @media (max-width: 700px) {
+      .dashboard-header { padding: 1.2rem 0.3rem 1.1rem 0.3rem; }
+      .plotly-graph { padding: 0.7rem 0.3rem; }
+      .card { margin-bottom: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#"><i class="fas fa-leaf"></i> Carbone & RSE</a>
+      <div class="collapse navbar-collapse justify-content-end">
+        <a href="{% url 'dashboard_gestionnaire' %}" class="btn btn-outline-light btn-sm ms-3">
+          <i class="fas fa-arrow-left"></i> Retour au Dashboard
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container main-content">
+    <div class="dashboard-header">
+      <h1><i class="fas fa-leaf"></i> Tableau de bord Carbone & RSE</h1>
+      <p>
+        Suivi intelligent de l’empreinte carbone des articles, alertes RSE, et conseils d’optimisation.<br>
+        <span style="color:#49cc90;font-weight:600;">Agissez pour une gestion de stock plus verte et responsable.</span>
+      </p>
+    </div>
+
+    <div class="plotly-graph">
+      <!-- Graphique Plotly intégré dynamiquement -->
+      {{ graph_div|safe }}
+    </div>
+
+    <div class="row g-4 mb-3">
+      <div class="col-md-6">
+        <div class="card card-green p-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-lightbulb"></i> Astuce RSE</h5>
+            <p class="card-text">💡 Privilégiez les fournisseurs locaux : moins de transport = moins de CO₂ !</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card card-eco p-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-recycle"></i> Stock tournant</h5>
+            <p class="card-text">Pensez à faire tourner votre stock pour réduire le gaspillage et améliorer le cycle de vie des produits.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-4 mb-2 text-center">
+    <i class="fas fa-seedling"></i> GestionStock • Carbone & RSE © 2025
+  </footer>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</body>
+</html>

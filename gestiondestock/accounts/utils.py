@@ -17,7 +17,7 @@ def send_email_otp(user):
     send_mail(
     subject,
     message,
-    settings.gestiondestock0@gmail.com,   # <-- ici on passe bien l’adresse Gmail
+  #  settings.gestiondestock0@gmail.com,   # <-- ici on passe bien l’adresse Gmail
     [user.email],
 )
 
