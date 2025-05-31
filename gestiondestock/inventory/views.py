@@ -80,7 +80,7 @@ def login_view(request):
 
         user = authenticate(request, username=username, password=password)
         if user is None:
-            messages.error(request, "Nom d’utilisateur ou mot de passe incorrect.")
+            messages.error(request, "Nom d utilisateur ou mot de passe incorrect.")
             return redirect("login")
 
         UserProfile.objects.get_or_create(user=user)
@@ -89,7 +89,7 @@ def login_view(request):
             return redirect("login")
 
         login(request, user)
-        # ------ Redirection selon le rôle -------
+       
         if user.role == "admin":
             return redirect("/admin/")
         elif user.role == "gestionnaire":
@@ -97,17 +97,14 @@ def login_view(request):
         elif user.role == "fournisseur":
             return redirect("dashboard_fournisseur")
         return redirect("dashboard_employe")
-    # Ici, c'est un GET (formulaire affiché pour la première fois)
     return render(request, "login.html")
 
 
-# Déconnexion
 @never_cache
 def log_out(request):
     logout(request)
     messages.success(request, "Vous êtes maintenant déconnecté.")
     return redirect('login')
-
 
 @login_required
 def redirect_dashboard(request):
@@ -124,7 +121,6 @@ def redirect_dashboard(request):
     return redirect('login')
 
 
-# Dashboards
 @login_required
 def dashboard_gestionnaire(request):
     return render(request, 'dashboard_gestionnaire.html')
@@ -147,7 +143,7 @@ def dashboard_fournisseur(request):
         fournisseur = Fournisseur.objects.get(user=request.user)
     except Fournisseur.DoesNotExist:
         messages.error(request, "Aucun fournisseur associé à ce compte utilisateur.")
-        return redirect('login')  # Ou vers une autre page d'accueil ou info
+        return redirect('login')  
 
     commandes = Commande.objects.filter(fournisseur=fournisseur)
     
@@ -225,8 +221,6 @@ def delete_product(request, id):
 
 
 
-
-# Messagerie
 @login_required
 def msg(request):
     users = CustomUser.objects.exclude(id=request.user.id)
@@ -291,6 +285,7 @@ def complete_profile(request):
         except TwoFactorCode.DoesNotExist:
             form.add_error('code', 'Code invalide ou déjà utilisé.')
     return render(request, 'complete_profile.html', {'step': 'verify', 'email': email, 'form': form})
+
 # Rapport IA
 @login_required
 @user_passes_test(is_manager)
@@ -589,3 +584,12 @@ def validate_product_field(request):
 
         return JsonResponse({"error": error})
     return JsonResponse({"error": "Méthode non autorisée."}, status=405)
+
+
+
+
+
+
+
+
+

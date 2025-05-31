@@ -36,7 +36,7 @@ class ArticleForm(forms.ModelForm):
             }),
             'prix': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Prix (€)',
+                'placeholder': 'Prix (DH)',
                 'step': '0.01',
                 'min': '0'
             }),
@@ -125,11 +125,17 @@ class OTPVerificationForm(forms.Form):
     code = forms.CharField(label="Code de vérification", max_length=6)
 
 class FournisseurForm(forms.ModelForm):
+    username = forms.CharField(max_length=150, required=False)
+    password = forms.CharField(widget=forms.PasswordInput, required=False)
+
     class Meta:
         model = Fournisseur
         fields = ['nom', 'contact', 'email', 'adresse']
 
-User = get_user_model()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
 
 class FournisseurUserForm(forms.Form):
     username = forms.CharField(label="Nom d'utilisateur", max_length=150)
@@ -150,4 +156,4 @@ class DemandeArticleForm(forms.ModelForm):
 class MouvementForm(forms.ModelForm):
     class Meta:
         model = MouvementStock
-        fields = ['article', 'quantite', 'motif']  # ← Mets ici UNIQUEMENT les champs de ton modèle
+        fields = ['article', 'quantite', 'motif'] 
