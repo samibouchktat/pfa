@@ -25,7 +25,7 @@ from .views import (
     # Rapport IA
     report_ai_view,
     stats_articles_par_categorie,stats_top_articles,stats_mouvements_stock,
-    stats_articles_rupture, stats_commandes_par_fournisseur,render,liste_demandes ,
+    stats_articles_rupture, stats_commandes_par_fournisseur,render,liste_demandes , decouvrire_demo,
 )
 
 urlpatterns = [
@@ -86,4 +86,5 @@ urlpatterns = [
     path('articles/export/<str:format>/', export_articles, name='export_articles'),
     path('autocomplete-product-names/', autocomplete_product_names, name='autocomplete_product_names'),
     path('articles/validate-field/', validate_product_field, name='validate_product_field'),
+    path('decouvrire-demo/', decouvrire_demo, name='decouvrire_demo'),
 ]

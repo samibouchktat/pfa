@@ -605,7 +605,11 @@ def validate_product_field(request):
 
         return JsonResponse({"error": error})
     return JsonResponse({"error": "Méthode non autorisée."}, status=405)
-
+def decouvrire_demo(request):
+    """
+    Affiche la page contenant la vidéo .mp4 que vous avez téléchargée.
+    """
+    return render(request, 'decouvrire_demo.html')
 
 
 
