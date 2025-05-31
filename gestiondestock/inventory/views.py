@@ -188,15 +188,28 @@ def liste_articles(request):
     return render(request, 'articles.html', {'products': products})
 
 
-@login_required
-def add_product(request):
-    form = ArticleForm(request.POST or None)
-    if form.is_valid():
-        form.save()
-        messages.success(request, "Produit ajouté avec succès.")
-        return redirect('product_list')
-    return render(request, 'add_product.html', {'form': form})
+def is_gestionnaire(user):
+    return getattr(user, "role", None) in ["gestionnaire", "admin"]
 
+@login_required
+@user_passes_test(is_gestionnaire)
+def add_product(request):
+    """
+    Ajoute un nouvel article. On copie `quantite` dans `stock` pour que la liste affiche directement la quantité initiale.
+    """
+    if request.method == "POST":
+        form = ArticleForm(request.POST)
+        if form.is_valid():
+            # On ne sauve pas tout de suite ; on veut d'abord copier quantite -> stock
+            article = form.save(commit=False)
+            article.stock = article.quantite
+            article.save()
+            messages.success(request, "Produit ajouté avec succès.")
+            return redirect('product_list')  # ou 'liste_articles' selon votre nommage
+    else:
+        form = ArticleForm()
+
+    return render(request, 'add_product.html', {'form': form})
 
 @login_required
 def edit_product(request, id):
@@ -333,8 +346,10 @@ def commande_detail(request, id):
     avoirs = commande.articles_commande.all()
     return render(request, 'commande_detail.html', {'commande': commande, 'avoirs': avoirs})
 
+
 def is_gestionnaire(user):
-    return user.role == 'gestionnaire' or user.role == 'admin'
+    return user.role in ['gestionnaire', 'admin']
+
 
 @login_required
 @user_passes_test(is_gestionnaire)
@@ -440,33 +455,39 @@ def stats_commandes_par_fournisseur(request):
     })
 from django.shortcuts import render, redirect
 
+@login_required
+@user_passes_test(is_gestionnaire)
 def nouvelle_entree(request):
     if request.method == 'POST':
         form = MouvementStockForm(request.POST)
         if form.is_valid():
             mouvement = form.save(commit=False)
             mouvement.type_mouvement = 'entree'
-            mouvement.utilisateur = request.user
+            mouvement.user = request.user
+            # Lors du save(), la méthode model.save() mettra à jour article.stock
             mouvement.save()
-            # Redirige vers le dashboard du gestionnaire
             return redirect('dashboard_gestionnaire')
     else:
         form = MouvementStockForm()
     return render(request, 'nouvelle_entree.html', {'form': form})
 
+
+@login_required
+@user_passes_test(is_gestionnaire)
 def nouvelle_sortie(request):
     if request.method == 'POST':
         form = MouvementStockForm(request.POST)
         if form.is_valid():
             mouvement = form.save(commit=False)
             mouvement.type_mouvement = 'sortie'
-            mouvement.utilisateur = request.user
+            mouvement.user = request.user
+            # Ici aussi, le save() de MouvementStock mettra à jour article.stock
             mouvement.save()
-            # Redirige vers le dashboard du gestionnaire
             return redirect('dashboard_gestionnaire')
     else:
         form = MouvementStockForm()
     return render(request, 'nouvelle_sortie.html', {'form': form})
+
 def faire_demande(request):
     if request.method == 'POST':
         form = DemandeArticleForm(request.POST)

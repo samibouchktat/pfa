@@ -149,10 +149,19 @@ class MouvementStockForm(forms.ModelForm):
     class Meta:
         model = MouvementStock
         fields = ['article', 'quantite', 'motif']
+        widgets = {
+            'article': forms.Select(attrs={'class': 'form-select'}),
+            'quantite': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'motif': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Motif (facultatif)'}),
+        }
 class DemandeArticleForm(forms.ModelForm):
-     class Meta:
-            model = DemandeArticle
-            fields = ['article', 'quantite']
+    class Meta:
+        model = DemandeArticle
+        fields = ['article', 'quantite']
+        widgets = {
+            'article': forms.Select(attrs={'class': 'form-select'}),
+            'quantite': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+        }
 class MouvementForm(forms.ModelForm):
     class Meta:
         model = MouvementStock

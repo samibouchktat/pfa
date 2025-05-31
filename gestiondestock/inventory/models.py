@@ -44,34 +44,35 @@ class Fournisseur(models.Model):
 
 
 # Article
+# Article
 class Article(models.Model):
-    nom       = models.CharField(max_length=200)
-    reference = models.CharField(max_length=100, unique=True)
-    prix      = models.DecimalField(max_digits=10, decimal_places=2)
-    quantite  = models.IntegerField(default=0, help_text="Quantité réelle en stock")
-    stock     = models.IntegerField(default=0, help_text="Stock calculé ou ajusté manuellement")
-    description = models.TextField(blank=True, default="")
-    facteur_co2 = models.FloatField(
-        default=0.0,
-        verbose_name="Facteur d'émission CO₂ (kg/unit)",
-        help_text="Renseigne le facteur d’émission de CO₂ pour ce produit (ADEME ou estimation, en kg par unité)"
-    )
-    stock_min = models.PositiveIntegerField(default=1)
+    nom           = models.CharField(max_length=200)
+    reference     = models.CharField(max_length=100, unique=True)
+    prix          = models.DecimalField(max_digits=10, decimal_places=2)
+    quantite      = models.IntegerField(default=0, help_text="Quantité réelle en stock (non utilisée pour entrées/sorties)")
+    stock         = models.IntegerField(default=0, help_text="Stock calculé à partir des mouvements")
+    description   = models.TextField(blank=True, default="")
+    facteur_co2   = models.FloatField(default=0.0, verbose_name="Facteur CO₂ (kg/unité)")
+    stock_min     = models.PositiveIntegerField(default=1)
+
     def __str__(self):
         return f"{self.nom} ({self.reference})"
+
     def update_stock(self):
         """
-        Calcule le stock actuel à partir des mouvements liés.
+        Recalcule le stock à partir de l'historique des mouvements.
         """
-        total = sum(
-            entry.entree - entry.sortie
-            for entry in self.stock_entries.all()
-        )
+        total = sum(m.entree - m.sortie for m in self.movements.all())
         return total
+
 
 # Mouvements de stock
 class Stock(models.Model):
-    article      = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='stock_entries')
+    article      = models.ForeignKey(
+        Article,
+        on_delete=models.CASCADE,
+        related_name='anciennes_entrees'  # <-- Renommé ici
+    )
     entree       = models.IntegerField(default=0)
     sortie       = models.IntegerField(default=0)
     date_entree  = models.DateField(null=True, blank=True)
@@ -80,7 +81,7 @@ class Stock(models.Model):
     description  = models.TextField(blank=True, default="")
 
     def __str__(self):
-        return f"Mvt {self.id}: {self.article.nom} +{self.entree}/-{self.sortie}"
+        return f"MvtStock {self.id} : {self.article.nom} +{self.entree}/-{self.sortie}"
 
 # Commande et détails
 class Commande(models.Model):
@@ -180,26 +181,57 @@ class MouvementStock(models.Model):
         ('entree', 'Entrée'),
         ('sortie', 'Sortie'),
     ]
-    article = models.ForeignKey(Article, on_delete=models.CASCADE)
-    type_mouvement = models.CharField(max_length=10, choices=TYPE_CHOICES)
-    quantite = models.PositiveIntegerField()
-    date = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.SET_NULL, 
-        null=True
+    article         = models.ForeignKey(
+        Article,
+        on_delete=models.CASCADE,
+        related_name='movements'
     )
-    motif = models.CharField(max_length=255, blank=True)
+    type_mouvement  = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    quantite        = models.PositiveIntegerField()
+    date            = models.DateTimeField(auto_now_add=True)
+    user            = models.ForeignKey(
+                        settings.AUTH_USER_MODEL,
+                        on_delete=models.SET_NULL,
+                        null=True, blank=True
+                     )
+    motif           = models.CharField(max_length=255, blank=True)
+
+    @property
+    def entree(self):
+        return self.quantite if self.type_mouvement == 'entree' else 0
+
+    @property
+    def sortie(self):
+        return self.quantite if self.type_mouvement == 'sortie' else 0
 
     def save(self, *args, **kwargs):
+        """
+        Lorsqu'on enregistre un MouvementStock, on met à jour l'attribut `stock` de l'article.
+        """
+        # Si l'objet existe déjà, on "annule" d'abord l'impact précédent
+        if self.pk:
+            ancien = MouvementStock.objects.get(pk=self.pk)
+            if ancien.type_mouvement == 'entree':
+                self.article.stock -= ancien.quantite
+            else:
+                self.article.stock += ancien.quantite
+
+        # Applique le nouveau mouvement
         if self.type_mouvement == 'entree':
             self.article.stock += self.quantite
-        elif self.type_mouvement == 'sortie':
+        else:  # 'sortie'
             if self.quantite > self.article.stock:
-                raise ValueError("Stock insuffisant")
+                raise ValueError("Stock insuffisant pour effectuer la sortie.")
             self.article.stock -= self.quantite
+
+        # Sauvegarde l'article avant de persister le mouvement
         self.article.save()
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        signe = "+" if self.type_mouvement == 'entree' else "-"
+        return f"Mvt {self.id} : {self.article.nom} {signe}{self.quantite}"
+
 class DemandeArticle(models.Model):
     STATUT_CHOICES = [
         ('en_attente', 'En attente'),
