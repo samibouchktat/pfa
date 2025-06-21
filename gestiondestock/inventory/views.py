@@ -41,8 +41,9 @@ from .forms import MouvementForm
 import io
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
-from .models import Article
+
 from django.http import JsonResponse
+from .forms import ArticleUpdateForm
 AvoirFormSet = inlineformset_factory(Commande, Avoir, fields=('article','quantite'), extra=1, can_delete=True)
 from .models import (
     Article, Stock, Fournisseur, Commande, Avoir,
@@ -176,9 +177,10 @@ def dashboard_fournisseur(request):
     return render(request, "dashboard_fournisseur.html", context)
 
 # CRUD Articles
+@never_cache
 @login_required
 def liste_articles(request):
-    qs = Article.objects.all()
+    qs = Article.objects.all().order_by('-stock', 'nom')
     paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
@@ -186,7 +188,6 @@ def liste_articles(request):
     except (EmptyPage, PageNotAnInteger):
         products = paginator.get_page(1)
     return render(request, 'articles.html', {'products': products})
-
 
 def is_gestionnaire(user):
     return getattr(user, "role", None) in ["gestionnaire", "admin"]
@@ -200,12 +201,11 @@ def add_product(request):
     if request.method == "POST":
         form = ArticleForm(request.POST)
         if form.is_valid():
-            # On ne sauve pas tout de suite ; on veut d'abord copier quantite -> stock
             article = form.save(commit=False)
             article.stock = article.quantite
             article.save()
             messages.success(request, "Produit ajouté avec succès.")
-            return redirect('product_list')  # ou 'liste_articles' selon votre nommage
+            return redirect('product_list')# ou 'liste_articles' selon votre nommage
     else:
         form = ArticleForm()
 
@@ -217,11 +217,9 @@ def edit_product(request, id):
     form = ArticleForm(request.POST or None, instance=article)
     if form.is_valid():
         form.save()
-        messages.success(request, "Article modifié avec succès.")
-        return redirect('product_list')
+        messages.success(request, "Produit modifié avec succès.")
+        return redirect('product_list')  # Redirige vers ta liste d’articles
     return render(request, 'edit_product.html', {'form': form, 'article': article})
-
-
 @login_required
 def delete_product(request, id):
     article = get_object_or_404(Article, id=id)
@@ -261,44 +259,89 @@ def conversation(request, user_id):
 # Vérification OTP email
 @login_required
 def complete_profile(request):
-    # Étape 1: saisie email
-    if 'otp_email' not in request.session:
-        form = EmailVerificationForm(request.POST or None)
+    # Si c'est un GET (ou un autre verbe qui n'est pas POST), on réinitialise la clé de session
+    if request.method != "POST":
+        # Supprime la valeur de session si elle existe
+        request.session.pop("otp_email", None)
+
+        # Affiche le formulaire de saisie d'email (step 1)
+        form = EmailVerificationForm()
+        return render(request, "complete_profile.html", {
+            "step": "email",
+            "form": form
+        })
+
+    # À partir d'ici, request.method == "POST"
+
+    # --- Étape 1 : l'utilisateur a soumis le champ email pour recevoir le code ---
+    if "otp_email" not in request.session:
+        form = EmailVerificationForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
+            email = form.cleaned_data["email"]
+
+            # On génère l'objet TwoFactorCode (contenant le code) pour l'utilisateur courant
             code_obj = TwoFactorCode.create_code(request.user)
-            request.session['otp_email'] = email
+
+            # On stocke en session l'email qui est en cours de vérification
+            request.session["otp_email"] = email
+
+            # On envoie le mail avec le code
             send_mail(
-                "Votre code de vérification",
-                f"Bonjour {request.user.username},\nVotre code est : {code_obj.code}",
-                settings.EMAIL_HOST_USER,
-                [email],
+                subject="Votre code de vérification",
+                message=f"Bonjour {request.user.username},\nVotre code est : {code_obj.code}",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
                 fail_silently=False,
             )
-            return render(request, 'complete_profile.html', {'step':'verify','email': email,'form': OTPVerificationForm()})
-        return render(request, 'complete_profile.html', {'step':'email','form': form})
 
-    # Étape 2: vérification code
-    email = request.session.get('otp_email')
-    form = OTPVerificationForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        code = form.cleaned_data['code']
+            # On prépare le formulaire du pas 2 (vérification du code)
+            form_code = OTPVerificationForm()
+            return render(request, "complete_profile.html", {
+                "step": "verify",
+                "email": email,
+                "form": form_code
+            })
+        else:
+            # Le formulaire EmailVerificationForm n'est pas valide (ex. champ vide, format non valide, etc.)
+            return render(request, "complete_profile.html", {
+                "step": "email",
+                "form": form
+            })
+
+    # --- Étape 2 : l'utilisateur soumet le code reçu par e-mail ---
+    email = request.session.get("otp_email")
+    form_code = OTPVerificationForm(request.POST)
+    if form_code.is_valid():
+        code = form_code.cleaned_data["code"]
         try:
             otp = TwoFactorCode.objects.get(user=request.user, code=code, is_used=False)
             if otp.is_valid():
+                # Le code est encore valide : on marque l'OTP comme utilisé
                 otp.is_used = True
                 otp.save()
-                user = request.user
-                user.secondary_email = email     # <-- On stocke l'email validé
-                user.save()
-                del request.session['otp_email']
-                messages.success(request, f"L'email de vérification {email} a été ajouté à votre compte. Vous pourrez vous connecter avec cet email ou celui donné par l'administrateur.")
-                return redirect('redirect_dashboard')
-            form.add_error('code', 'Ce code a expiré.')
-        except TwoFactorCode.DoesNotExist:
-            form.add_error('code', 'Code invalide ou déjà utilisé.')
-    return render(request, 'complete_profile.html', {'step': 'verify', 'email': email, 'form': form})
 
+                # On rattache l'email secondaire au user
+                user = request.user
+                user.secondary_email = email
+                user.save()
+
+                # On supprime la session
+                del request.session["otp_email"]
+
+                messages.success(request,
+                    f"L'adresse {email} a bien été ajoutée à votre compte. Vous pourrez vous connecter avec cet email ou celui de l'administrateur.")
+                return redirect("redirect_dashboard")
+            else:
+                # Le code est expiré (is_valid() retourne False)
+                form_code.add_error("code", "Ce code a expiré.")
+        except TwoFactorCode.DoesNotExist:
+            form_code.add_error("code", "Code invalide ou déjà utilisé.")
+    # Si on arrive ici, c'est soit parce que form_code n'est pas valide, soit que le code fourni est incorrect/expiré
+    return render(request, "complete_profile.html", {
+        "step": "verify",
+        "email": email,
+        "form": form_code
+    })
 # Rapport IA
 @login_required
 @user_passes_test(is_manager)
@@ -455,8 +498,7 @@ def stats_commandes_par_fournisseur(request):
     })
 from django.shortcuts import render, redirect
 
-@login_required
-@user_passes_test(is_gestionnaire)
+
 def nouvelle_entree(request):
     if request.method == 'POST':
         form = MouvementStockForm(request.POST)
@@ -464,13 +506,14 @@ def nouvelle_entree(request):
             mouvement = form.save(commit=False)
             mouvement.type_mouvement = 'entree'
             mouvement.user = request.user
-            # Lors du save(), la méthode model.save() mettra à jour article.stock
             mouvement.save()
-            return redirect('dashboard_gestionnaire')
+            messages.success(request, "Entrée de stock enregistrée avec succès.")
+            return redirect('product_list')
+        else:
+            print("❌ Erreurs du formulaire :", form.errors)  # ← AJOUT ICI
     else:
         form = MouvementStockForm()
     return render(request, 'nouvelle_entree.html', {'form': form})
-
 
 @login_required
 @user_passes_test(is_gestionnaire)
@@ -481,9 +524,12 @@ def nouvelle_sortie(request):
             mouvement = form.save(commit=False)
             mouvement.type_mouvement = 'sortie'
             mouvement.user = request.user
-            # Ici aussi, le save() de MouvementStock mettra à jour article.stock
-            mouvement.save()
-            return redirect('dashboard_gestionnaire')
+            try:
+                mouvement.save()
+                messages.success(request, "Sortie de stock enregistrée avec succès.")
+                return redirect('product_list')  # Affiche la liste mise à jour
+            except ValueError as e:
+                form.add_error(None, str(e))
     else:
         form = MouvementStockForm()
     return render(request, 'nouvelle_sortie.html', {'form': form})
@@ -610,7 +656,41 @@ def decouvrire_demo(request):
     Affiche la page contenant la vidéo .mp4 que vous avez téléchargée.
     """
     return render(request, 'decouvrire_demo.html')
+@login_required
+def modifier_quantite(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    if request.method == "POST":
+        form = ArticleUpdateForm(request.POST, instance=article)
+        if form.is_valid():
+            form.save()  # met à jour quantite + stock via save() override
+            # Après save(), on peut récupérer le user et son secondary_email
+            utilisateur = request.user
+            if article.stock < article.stock_min:
+                email_dest = utilisateur.secondary_email
+                if email_dest:
+                    # Composez ici le même corps / sujet que précédemment
+                    sujet = f"⚠️ Stock critique pour « {article.nom} »"
+                    corps = (
+                        f"Bonjour {utilisateur.username},\n\n"
+                        f"Le stock de l’article « {article.nom} » (Réf : {article.reference}) "
+                        f"est critique ({article.stock} unités, seuil : {article.stock_min}).\n\n"
+                        "Merci de réagir rapidement.\n"
+                    )
+                    send_mail(
+                        sujet,
+                        corps,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email_dest],
+                        fail_silently=False
+                    )
+            return redirect("liste_articles")
+    else:
+        form = ArticleUpdateForm(instance=article)
 
+    return render(request, "inventory/modifier_article.html", {
+        "article": article,
+        "form": form
+    })
 
 
 

@@ -11,6 +11,9 @@ from django.db.models import Q
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
+
 
 # Utilisateur personnalisé avec rôles
 class CustomUser(AbstractUser):
@@ -20,9 +23,19 @@ class CustomUser(AbstractUser):
         ('employe', 'Employé'),
         ('fournisseur', 'Fournisseur'),
     ]
+
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    secondary_email = models.EmailField("Email secondaire (2FA)", blank=True, null=True, unique=True)
+
+    # Garder une seule définition de secondary_email :
+    secondary_email = models.EmailField(
+        "Email secondaire (2FA)",
+        max_length=254,
+        blank=True,
+        null=True,
+        unique=True,
+        help_text="Adresse e-mail ajoutée via la procédure 2FA"
+    )
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
@@ -44,28 +57,110 @@ class Fournisseur(models.Model):
 
 
 # Article
-# Article
 class Article(models.Model):
     nom           = models.CharField(max_length=200)
     reference     = models.CharField(max_length=100, unique=True)
     prix          = models.DecimalField(max_digits=10, decimal_places=2)
-    quantite      = models.IntegerField(default=0, help_text="Quantité réelle en stock (non utilisée pour entrées/sorties)")
-    stock         = models.IntegerField(default=0, help_text="Stock calculé à partir des mouvements")
+    quantite      = models.IntegerField(default=0, help_text="Quantité initiale")
+    stock         = models.IntegerField(default=0, help_text="Stock courant")
     description   = models.TextField(blank=True, default="")
     facteur_co2   = models.FloatField(default=0.0, verbose_name="Facteur CO₂ (kg/unité)")
-    stock_min     = models.PositiveIntegerField(default=1)
+    stock_min     = models.PositiveIntegerField(default=1, help_text="Seuil minimal pour alerte")
+    alerte_stock_faible_envoyee = models.BooleanField(
+        default=False,
+        help_text="Passé à True dès qu'une alerte stock < 10 a été envoyée"
+    )
 
     def __str__(self):
         return f"{self.nom} ({self.reference})"
 
-    def update_stock(self):
-        """
-        Recalcule le stock à partir de l'historique des mouvements.
-        """
-        total = sum(m.entree - m.sortie for m in self.movements.all())
-        return total
+def save(self, *args, **kwargs):
+    if self.pk:  # L'article existe déjà → on met à jour le stock si la quantité a changé
+        old = Article.objects.get(pk=self.pk)
+        delta = self.quantite - old.quantite
+        self.stock += delta
+    else:
+        self.stock = self.quantite
+    super().save(*args, **kwargs)
 
+        # Alerte de stock critique
+    if self.stock < self.stock_min and not self.alerte_stock_faible_envoyee:
+            self.envoyer_alerte_stock_critique()
+            Article.objects.filter(pk=self.pk).update(alerte_stock_faible_envoyee=True)
+        
+    elif self.stock >= self.stock_min and self.alerte_stock_faible_envoyee:
+            Article.objects.filter(pk=self.pk).update(alerte_stock_faible_envoyee=False)
 
+def envoyer_alerte_stock_critique(self):
+        User = get_user_model()
+        destinataires = User.objects.filter(
+            role="gestionnaire",
+            is_active=True,
+            secondary_email__isnull=False
+        ).values_list("secondary_email", flat=True)
+
+        if not destinataires:
+            return
+
+        sujet = f"⚠️ Alerte stock critique : {self.nom}"
+        corps = (
+            f"Bonjour,\n\n"
+            f"L’article « {self.nom} » (Réf : {self.reference}) est à un niveau critique.\n"
+            f"Quantité actuelle : {self.stock} unités (Seuil minimal : {self.stock_min}).\n\n"
+            f"Merci de réapprovisionner dès que possible.\n\n"
+            f"Cordialement,\n"
+            f"GestionStock PRO"
+        )
+
+        send_mail(
+            sujet,
+            corps,
+            settings.DEFAULT_FROM_EMAIL,
+            list(destinataires),
+            fail_silently=False,
+        )
+
+def envoyer_alerte_stock_critique(self, declencheur=None):
+    User = get_user_model()
+
+    if not declencheur:
+        return  # Aucun utilisateur identifié pour déclencher
+
+    role = declencheur.role
+    article_nom = self.nom
+    article_ref = self.reference
+
+    # Sujet et message personnalisés selon le rôle
+    if role == "gestionnaire":
+        sujet = f"⚠️ Alerte Stock Critique : {article_nom}"
+        corps = (
+            f"Bonjour,\n\n"
+            f"L’article « {article_nom} » (Réf : {article_ref}) est sous le seuil critique.\n"
+            f"Veuillez contacter un fournisseur pour réapprovisionnement.\n\n"
+            f"Cordialement,\nGestionStock PRO"
+        )
+    elif role == "employe":
+        sujet = f"⚠️ Alerte Stock Faible détectée"
+        corps = (
+            f"Bonjour,\n\n"
+            f"L’article « {article_nom} » (Réf : {article_ref}) a un stock critique.\n"
+            f"Veuillez en informer votre gestionnaire de stock pour action immédiate.\n\n"
+            f"Cordialement,\nGestionStock PRO"
+        )
+    else:
+        # Autres rôles → on n'envoie rien
+        return
+
+    # Envoi uniquement si secondary_email est défini
+    email = declencheur.secondary_email
+    if email:
+        send_mail(
+            sujet,
+            corps,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False
+        )
 # Mouvements de stock
 class Stock(models.Model):
     article      = models.ForeignKey(
@@ -204,33 +299,62 @@ class MouvementStock(models.Model):
     def sortie(self):
         return self.quantite if self.type_mouvement == 'sortie' else 0
 
-    def save(self, *args, **kwargs):
-        """
-        Lorsqu'on enregistre un MouvementStock, on met à jour l'attribut `stock` de l'article.
-        """
-        # Si l'objet existe déjà, on "annule" d'abord l'impact précédent
-        if self.pk:
-            ancien = MouvementStock.objects.get(pk=self.pk)
-            if ancien.type_mouvement == 'entree':
-                self.article.stock -= ancien.quantite
-            else:
-                self.article.stock += ancien.quantite
+def save(self, *args, **kwargs):
+    # Annule l'effet de l'ancien mouvement si modification
+    if self.pk:
+        ancien = MouvementStock.objects.get(pk=self.pk)
+        if ancien.type_mouvement == 'entree':
+            self.article.stock -= ancien.quantite
+        else:
+            self.article.stock += ancien.quantite
 
-        # Applique le nouveau mouvement
-        if self.type_mouvement == 'entree':
-            self.article.stock += self.quantite
-        else:  # 'sortie'
-            if self.quantite > self.article.stock:
-                raise ValueError("Stock insuffisant pour effectuer la sortie.")
-            self.article.stock -= self.quantite
+    # Applique le nouveau mouvement
+    if self.type_mouvement == 'entree':
+        self.article.stock += self.quantite
+    else:  # sortie
+        if self.quantite > self.article.stock:
+            raise ValueError("Stock insuffisant pour effectuer la sortie.")
+        self.article.stock -= self.quantite
 
-        # Sauvegarde l'article avant de persister le mouvement
-        self.article.save()
-        super().save(*args, **kwargs)
+    # Sauvegarde l'article
+    self.article.save()
+    super().save(*args, **kwargs)
 
-    def __str__(self):
-        signe = "+" if self.type_mouvement == 'entree' else "-"
-        return f"Mvt {self.id} : {self.article.nom} {signe}{self.quantite}"
+    # Alerte si stock < 10
+    if self.article.stock < 10 and self.user:
+        destinataire = self.user.secondary_email
+        if not destinataire:
+            return  # Pas d'email secondaire défini
+
+        role = self.user.role
+        sujet = f"⚠️ Alerte : Stock faible pour « {self.article.nom} »"
+
+        if role == 'gestionnaire':
+            corps = (
+                f"Bonjour {self.user.username},\n\n"
+                f"Le stock de l’article « {self.article.nom} » (Réf : {self.article.reference}) "
+                f"est critique (stock = {self.article.stock}).\n"
+                f"Veuillez contacter un fournisseur pour réapprovisionnement.\n\n"
+                f"Cordialement,\nGestionStock PRO"
+            )
+        elif role == 'employe':
+            corps = (
+                f"Bonjour {self.user.username},\n\n"
+                f"Le stock de l’article « {self.article.nom} » (Réf : {self.article.reference}) "
+                f"est très bas (stock = {self.article.stock}).\n"
+                f"Veuillez alerter votre gestionnaire pour commande urgente.\n\n"
+                f"Cordialement,\nGestionStock PRO"
+            )
+        else:
+            return  # autre rôle : pas d'envoi
+
+        send_mail(
+            sujet,
+            corps,
+            settings.DEFAULT_FROM_EMAIL,
+            [destinataire],
+            fail_silently=False,
+        )
 
 class DemandeArticle(models.Model):
     STATUT_CHOICES = [

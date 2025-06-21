@@ -12,46 +12,43 @@ from .models import Fournisseur
 from django import forms
 from .models import MouvementStock
 from .models import DemandeArticle 
+from django import forms
+from django.forms import modelformset_factory
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'email', 'role')
+
+class CustomUserChangeForm(UserChangeForm):
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'email', 'role')
+
+
+        
 # Formulaire Article
 class ArticleForm(forms.ModelForm):
     class Meta:
         model = Article
-        # Spécifie explicitement les champs existants
-        fields = ['nom', 'reference', 'description', 'prix', 'quantite']
-        widgets = {
-            'nom': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nom du produit'
-            }),
-            'reference': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Référence'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'placeholder': 'Description',
-                'rows': 3
-            }),
-            'prix': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Prix (DH)',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'quantite': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Quantité',
-                'min': '0'
-            }),
-            'stock': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Stock',
-                'min': '0'
-            }),
-        }
+        # Assure-toi que tous les champs nécessaires sont ici
+        fields = ['nom', 'reference', 'description', 'prix', 'quantite', 'stock']
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        stock = cleaned_data.get('stock')
+        quantite = cleaned_data.get('quantite')
+
+        if stock is not None and stock < 0:
+            raise forms.ValidationError("Le stock ne peut pas être négatif.")
+
+        if quantite is not None and quantite < 0:
+            raise forms.ValidationError("La quantité ne peut pas être négative.")
+
+        return cleaned_data
 # Formulaire Fournisseur
 class CommandeForm(forms.ModelForm):
     class Meta:
@@ -149,11 +146,22 @@ class MouvementStockForm(forms.ModelForm):
     class Meta:
         model = MouvementStock
         fields = ['article', 'quantite', 'motif']
-        widgets = {
-            'article': forms.Select(attrs={'class': 'form-select'}),
-            'quantite': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'motif': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Motif (facultatif)'}),
-        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        article = cleaned_data.get('article')
+        quantite = cleaned_data.get('quantite')
+        type_mouvement = self.instance.type_mouvement  # ← cette ligne est essentielle
+
+        # Appliquer la vérification du stock uniquement pour les sorties
+        if type_mouvement == 'sortie' and article and quantite:
+            if article.stock < quantite:
+                raise forms.ValidationError(
+                    f"Stock insuffisant pour effectuer la sortie. Quantité demandée = {quantite}, quantité disponible = {article.stock}."
+                )
+
+        return cleaned_data
+
 class DemandeArticleForm(forms.ModelForm):
     class Meta:
         model = DemandeArticle
@@ -166,3 +174,7 @@ class MouvementForm(forms.ModelForm):
     class Meta:
         model = MouvementStock
         fields = ['article', 'quantite', 'motif'] 
+class ArticleUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Article
+        fields = ['quantite']

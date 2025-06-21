@@ -152,11 +152,10 @@
         let refInput = document.querySelector('input[name="reference"]');
         if(refInput){
             // Suggestions côté client (pour la démo), tu peux remplacer par tes données via AJAX
-            let referenceList = [
-                {% for ref in reference_suggestions %}
-                    "{{ ref }}",
-                {% endfor %}
-            ];
+            let referenceList = [];
+            if (window.referenceSuggestions) {
+                referenceList = window.referenceSuggestions;
+            }
             window.tagifyRef = new Tagify(refInput, {
                 whitelist: referenceList,
                 dropdown: { enabled: 0, maxItems: 10, classname: "tags-look", fuzzySearch: true },
@@ -233,7 +232,17 @@
 </script>
 
 <div class="container py-5">
-    <button id="themeToggle" class="dark-toggle-btn" type="button" title="Basculer mode sombre/clair">
+<!-- Inject reference_suggestions as JSON for JS usage -->
+{% if reference_suggestions %}
+<script id="reference-suggestions-data" type="application/json">
+    {{ reference_suggestions|json_script:"referenceSuggestions" }}
+</script>
+<script>
+    window.referenceSuggestions = JSON.parse(document.getElementById('referenceSuggestions').textContent);
+</script>
+{% endif %}
+
+<div class="container py-5">
         <i class="fa-regular fa-moon"></i> Mode sombre
     </button>
     <h2 class="text-center mb-5 fw-bold text-gradient">

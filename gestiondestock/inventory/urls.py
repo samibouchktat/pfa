@@ -50,6 +50,7 @@ urlpatterns = [
     path('articles/<int:id>/suppr/',  delete_product,  name='delete_product'),
 
 
+
     path('commandes/', commande_list, name='commande_list'),
     path('commandes/ajouter/', add_commande, name='add_commande'),
     path('commandes/<int:id>/', commande_detail, name='commande_detail'),

@@ -22,3 +22,4 @@ def send_sms_2fa(phone_number, code):
 
 # Exemple d'utilisation
 send_sms_2fa("+212123456789", "123456")
+
