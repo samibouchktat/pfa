@@ -1,88 +1,41 @@
 # inventory/utils.py
+import openai
+from django.conf import settings
 
-from twilio.rest import Client  # Si tu utilises Twilio pour l'envoi de SMS
+def generate_openai_report(data_summary, model="gpt-3.5-turbo", max_tokens=800):
+    """
+    Envoie le prompt à OpenAI et retourne la chaîne du rapport.
+    data_summary : liste de chaînes décrivant stock entrées/sorties.
+    """
+    api_key = getattr(settings, "OPENAI_API_KEY", None)
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY non défini dans les settings.")
+    openai.api_key = api_key
 
-
-def envoyer_sms(numero_telephone):
-    # Exemple d'envoi de SMS avec Twilio
-    client = Client('TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN')
-
-    message = client.messages.create(
-        body="Voici votre code de confirmation",
-        from_='+1XXXXXXXXXX',  # Ton numéro Twilio
-        to=numero_telephone
+    prompt = (
+        "Vous êtes un expert en gestion de la chaîne d’approvisionnement au niveau mondial. "
+        "À partir des données suivantes pour chaque article, qui proviennent de votre entrepôt local :\n"
+        + "\n".join(data_summary)
+        + "\n\n"
+        "Veuillez générer un rapport structuré comprenant :\n"
+        "1. **Analyse comparative globale** : Situer ces chiffres par rapport aux tendances mondiales du secteur (rotations, ruptures, surstocks).\n"
+        "2. **Indicateurs clés de performance (KPI)** : Taux de couverture des stocks, délai de rotation moyen, stock de sécurité recommandé.\n"
+        "3. **Risques et points de vigilance** : Articles à risque de rupture, exposition financière sur les surstocks, vulnérabilités de la chaîne.\n"
+        "4. **Recommandations stratégiques** : Ajustements de niveaux de réapprovisionnement, diversification des fournisseurs, prévisions de demande.\n"
+        "5. **Plan d’action** : Prochaines étapes concrètes à court, moyen et long terme.\n\n"
+        "Assurez-vous que le rapport est clair, concis et orienté vers l’action. "
+        "Utilisez un langage professionnel et évitez le jargon technique inutile."
     )
 
-    return message.sid  # Retourne l'ID du message envoyé
+    resp = openai.ChatCompletion.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "Assistant de génération de rapport"},
+            {"role": "user",   "content": prompt},
+        ],
+        max_tokens=max_tokens,
+    )
+    return resp.choices[0].message.content.strip()
 
-
-def analyze_articles(articles, low_threshold=5):
-    """
-    Pour chaque article, calcule un statut en fonction de sa quantité :
-      - 'Rupture' si quantité <= 0
-      - 'Stock faible' si quantité <= low_threshold
-      - 'OK' sinon
-    Retourne une liste de dicts contenant nom, reference, quantite et statut.
-    """
-    report = []
-    for art in articles:
-        q = getattr(art, 'quantite', 0)
-        if q <= 0:
-            statut = 'Rupture'
-        elif q <= low_threshold:
-            statut = 'Stock faible'
-        else:
-            statut = 'OK'
-        report.append({
-            'nom': art.nom,
-            'reference': art.reference,
-            'quantite': q,
-            'statut': statut,
-        })
-    return report
-
-
-def generate_report(stats, low_stock_items=None):
-    """
-    Génère un rapport plus complet :
-    - Titre avec emoji
-    - Synthèse chiffres-clés
-    - Liste des articles critiques (rupture ou stock faible)
-    - Mini-analyse de tendance
-    - Recommandations détaillées
-    """
-    lines = []
-    # 1. Titre
-    lines.append(f"🗓️ **Rapport Stock – {stats['date']}**\n")
-
-    # 2. Synthèse
-    lines.append("🔢 **Chiffres clés :**")
-    lines.append(f" • Total d’articles     : {stats['totalArticles']}")
-    lines.append(f" • Stock disponible     : {stats['stockDisponible']}")
-    lines.append(f" • Articles en rupture  : {stats['ruptures']}")
-    lines.append(f" • Commandes en attente : {stats['cmdEnAttente']}\n")
-
-    # 3. Articles critiques
-    if low_stock_items:
-        lines.append("⚠️ **Articles critiques :**")
-        for item in low_stock_items:
-            lines.append(f"   - {item['nom']} (quantité {item['quantite']}) → {item['statut']}")
-        lines.append("")  # ligne vide
-
-    # 4. Mini-tendance
-    if stats.get('last_week_stock') is not None:
-        delta = stats['stockDisponible'] - stats['last_week_stock']
-        trend = "↗️ augmentation" if delta > 0 else "↘️ diminution" if delta < 0 else "⏸️ stable"
-        lines.append(f"📈 Tendance hebdo : {trend} de {abs(delta)} unités\n")
-
-    # 5. Recommandations
-    lines.append("💡 **Recommandations :**")
-    if stats['ruptures'] > 0:
-        lines.append(" • Relancer immédiatement les fournisseurs pour les ruptures.")
-    elif low_stock_items:
-        lines.append(" • Surveiller les articles en stock faible listés ci-dessus.")
-    else:
-        lines.append(" • Bon niveau de stock global ! Continuez ainsi.")
-
-    return "\n".join(lines)
-
+# Alias pour importer proprement depuis views
+generate_report = generate_openai_report

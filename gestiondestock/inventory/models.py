@@ -166,7 +166,7 @@ class Stock(models.Model):
     article      = models.ForeignKey(
         Article,
         on_delete=models.CASCADE,
-        related_name='anciennes_entrees'  # <-- Renommé ici
+        related_name='anciennes_entrees'  
     )
     entree       = models.IntegerField(default=0)
     sortie       = models.IntegerField(default=0)

@@ -96,13 +96,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # 1) Lecture du .env
 import environ
 from pathlib import Path
-
+from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env') 
 env = environ.Env()
 env_file = BASE_DIR / '.env'
 if env_file.exists():
     env.read_env(env_file)
-
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 # 2) DEBUG
 DEBUG = env.bool("DEBUG", default=True)
 

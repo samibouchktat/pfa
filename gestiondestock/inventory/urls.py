@@ -15,15 +15,13 @@ from .views import (
     liste_articles, add_product, edit_product, delete_product,
 
     commande_detail, commande_list, add_commande,
-    fournisseur_list, add_fournisseur, edit_fournisseur, delete_fournisseur,dashboard_fournisseur,
+    fournisseur_list, add_fournisseur, edit_fournisseur, delete_fournisseur,dashboard_fournisseur,report_ai_view,
     # Fournisseurs
 
     # Messagerie
     msg, conversation,validate_product_field,
     nouvelle_sortie  , nouvelle_entree,faire_demande,mes_demandes,
-
-    # Rapport IA
-    report_ai_view,
+    
     stats_articles_par_categorie,stats_top_articles,stats_mouvements_stock,
     stats_articles_rupture, stats_commandes_par_fournisseur,render,liste_demandes , decouvrire_demo,
 )
@@ -32,7 +30,7 @@ urlpatterns = [
     # Authentification
     path('login/',  login_view,         name='login'), 
     path('logout/', log_out, name='log_out'),
-    path('', home, name='home'),  # page d'accueil du site (landing page)
+    path('', home, name='home'), 
     path('redirect-dashboard/', redirect_dashboard, name='redirect_dashboard'),
     path('dashboard/gest/',  dashboard_gestionnaire, name='dashboard_gestionnaire'),
     path('dashboard/emp/',   dashboard_employe,      name='dashboard_employe'),
@@ -60,10 +58,10 @@ urlpatterns = [
 # Après
     path('messages/', msg, name='msg'),
     path('conv/<int:user_id>/', conversation, name='conv'),
-
+    
     # Rapport IA
-    path('report-ai/',         report_ai_view, name='report_ai'),
-
+    path('report-ai/', report_ai_view, name='report_ai_view'),
+    #path('report-ai/', report_ai_view, name='openai_report'),
     path('fournisseurs/', fournisseur_list, name='fournisseur_list'),
     path('fournisseurs/ajouter/', add_fournisseur, name='add_fournisseur'),
     path('fournisseurs/<int:id>/modifier/', edit_fournisseur, name='edit_fournisseur'),
@@ -88,4 +86,5 @@ urlpatterns = [
     path('autocomplete-product-names/', autocomplete_product_names, name='autocomplete_product_names'),
     path('articles/validate-field/', validate_product_field, name='validate_product_field'),
     path('decouvrire-demo/', decouvrire_demo, name='decouvrire_demo'),
+    
 ]

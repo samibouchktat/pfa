@@ -1,4 +1,9 @@
 import os
+from django.db.models import F
+from django.shortcuts import render
+from django.utils.timezone import now
+from django.db.models import F
+from .models import Article
 import json
 import datetime
 from datetime import timedelta
@@ -37,8 +42,9 @@ from .forms import MouvementStockForm
 from django.http import HttpResponse
 import pandas as pd
 from .forms import MouvementForm
-        # Simple PDF via pandas pour dépanner, version professionnelle sur demande
-import io
+from datetime import datetime
+
+from .models import Article
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
 
@@ -56,12 +62,12 @@ from .forms import (
 
 )
 from .utils import generate_report
-
-# Configure OpenAI API key
+from django.db.models import F
+from django.shortcuts import render
+from django.conf import settings
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Sum
 import openai
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# Helpers
 
 def is_manager(user):
     return getattr(user, "role", None) in {"gestionnaire", "admin"}
@@ -95,8 +101,8 @@ def login_view(request):
             return redirect("/admin/")
         elif user.role == "gestionnaire":
             return redirect("dashboard_gestionnaire")
-        elif user.role == "fournisseur":
-            return redirect("dashboard_fournisseur")
+       # elif user.role == "fournisseur":
+        #    return redirect("dashboard_fournisseur")
         return redirect("dashboard_employe")
     return render(request, "login.html")
 
@@ -195,22 +201,20 @@ def is_gestionnaire(user):
 @login_required
 @user_passes_test(is_gestionnaire)
 def add_product(request):
-    """
-    Ajoute un nouvel article. On copie `quantite` dans `stock` pour que la liste affiche directement la quantité initiale.
-    """
     if request.method == "POST":
         form = ArticleForm(request.POST)
         if form.is_valid():
             article = form.save(commit=False)
             article.stock = article.quantite
             article.save()
-            messages.success(request, "Produit ajouté avec succès.")
-            return redirect('product_list')# ou 'liste_articles' selon votre nommage
+            messages.success(request, "✅ Produit ajouté avec succès.")
+            return redirect('product_list')  # Vérifie que cette URL existe
+        else:
+            messages.error(request, "❌ Formulaire invalide. Veuillez corriger les erreurs.")
     else:
         form = ArticleForm()
 
     return render(request, 'add_product.html', {'form': form})
-
 @login_required
 def edit_product(request, id):
     article = get_object_or_404(Article, id=id)
@@ -342,22 +346,7 @@ def complete_profile(request):
         "email": email,
         "form": form_code
     })
-# Rapport IA
-@login_required
-@user_passes_test(is_manager)
-def report_ai_view(request):
-    total = Article.objects.count()
-    entree = Stock.objects.aggregate(t=Coalesce(Sum('entree'),0))['t']
-    sortie = Stock.objects.aggregate(t=Coalesce(Sum('sortie'),0))['t']
-    dispo = entree - sortie
-    rupt = Article.objects.filter(stock__lte=0).count()
-    en_att = Commande.objects.filter(etat='en_attente').count()
-    stats = {'date': datetime.date.today().strftime('%d/%m/%Y'),'totalArticles': total,'stockDisponible': dispo,'ruptures': rupt,'cmdEnAttente': en_att}
-    report_text = generate_report(stats)
-    return render(request, 'report_ai.html', {'stats': stats, 'report': report_text})
 
-
-# Liste des commandes du gestionnaire
 @login_required
 def commande_list(request):
     commandes = Commande.objects.filter(employe=request.user)
@@ -514,9 +503,9 @@ def nouvelle_entree(request):
     else:
         form = MouvementStockForm()
     return render(request, 'nouvelle_entree.html', {'form': form})
-
 @login_required
 @user_passes_test(is_gestionnaire)
+
 def nouvelle_sortie(request):
     if request.method == 'POST':
         form = MouvementStockForm(request.POST)
@@ -698,3 +687,86 @@ def modifier_quantite(request, pk):
 
 
 
+
+
+
+def is_manager(user):
+    return getattr(user, "role", None) in {"gestionnaire", "admin"}
+
+import openai
+from django.conf import settings
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Sum
+
+from .models import Article, MouvementStock
+
+def is_manager(user):
+    return getattr(user, "role", None) in {"gestionnaire", "admin"}
+import logging
+logger = logging.getLogger(__name__)
+def is_manager(u):
+    return getattr(u, "role", "") in ("gestionnaire", "admin")
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+from .models import Article, MouvementStock
+from django.db.models import Sum
+from django.utils import timezone
+from .utils import generate_openai_report
+
+
+def is_manager(user):
+    return getattr(user, "role", "") in ("gestionnaire", "admin")
+from openai.error import RateLimitError
+from .models import Article, MouvementStock
+from .utils import generate_report
+from openai.error import RateLimitError, OpenAIError    
+from .utils import generate_report  # votre fonction wrapper OpenAI
+
+def is_manager(user):
+    return getattr(user, "role", "") in ("gestionnaire", "admin")
+
+@login_required
+@user_passes_test(is_manager)
+def report_ai_view(request):
+    # 1️⃣ On calcule toujours le résumé pour affichage en GET et POST
+    data_summary = []
+    articles   = Article.objects.all()
+    mouvements = MouvementStock.objects.all()
+    for art in articles:
+        in_qty  = (
+            mouvements
+            .filter(article=art, type_mouvement="ENTREE")
+            .aggregate(total=Sum('quantite'))['total']
+            or 0
+        )
+        out_qty = (
+            mouvements
+            .filter(article=art, type_mouvement="SORTIE")
+            .aggregate(total=Sum('quantite'))['total']
+            or 0
+        )
+        data_summary.append(
+            f"- {art.nom} : {in_qty} entrées, {out_qty} sorties, stock actuel {art.stock}"
+        )
+
+    sections = []
+    error    = None
+
+    if request.method == "POST":
+        try:
+            report    = generate_report(data_summary)
+            sections  = [s.strip() for s in report.split("\n\n") if s.strip()]
+        except RateLimitError:
+            error = "🚫 Votre quota OpenAI est dépassé, merci de réessayer plus tard."
+        except OpenAIError as e:
+            error = f"🚨 Erreur OpenAI : {e}"
+        except Exception as e:
+            error = f"❌ Une erreur est survenue : {e}"
+
+    return render(request, "openai_report.html", {
+        "data_summary": data_summary,
+        "sections":     sections,
+        "error":        error,
+    })

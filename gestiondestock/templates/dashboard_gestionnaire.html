@@ -382,7 +382,8 @@
       <li><a href="{% url 'nouvelle_entree' %}"><i class="fas fa-arrow-down"></i> <span>Entrée de stock</span></a></li>
       <li><a href="{% url 'nouvelle_sortie' %}"><i class="fas fa-arrow-up"></i> <span>Sortie de stock</span></a></li>
       <li><a href="{% url 'liste_demandes' %}"><i class="fas fa-clipboard-list"></i> <span>Demandes employés</span></a></li>
-      <li><a href="{% url 'report_ai' %}"><i class="fas fa-chart-line"></i> <span>Rapports</span></a></li>
+      <li><a href="{% url 'report_ai_view' %}"><i class="fas fa-chart-line"></i> <span>Rapports</span></a></li>
+
       <li><a href="{% url 'statistique' %}"><i class="fas fa-chart-bar"></i> <span>Statistiques</span></a></li>
       <li><a href="{% url 'msg' %}"><i class="fas fa-envelope-open-text"></i> <span>Messages</span></a></li>
       <li><a href="{% url 'complete_profile' %}"><i class="fas fa-user-shield"></i> <span>Email 2FA</span></a></li>
@@ -408,7 +409,12 @@
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item"><a class="nav-link active" href="#">Accueil</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'product_list' %}">Produits</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'report_ai' %}">Rapports</a></li>
+          <li class="nav-item">
+              <a class="nav-link" href="{% url 'report_ai_view' %}">Rapports</a>
+          </li>
+
+        
+
           <li class="nav-item"><a class="nav-link" href="{% url 'msg' %}">Messages</a></li>
         </ul>
         <a href="{% url 'log_out' %}" class="btn btn-outline-danger btn-dashboard">Déconnexion</a>
@@ -462,7 +468,10 @@
             <div class="card-body d-flex flex-column">
               <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Rapports</h5>
               <p class="card-text flex-grow-1">Consultez les statistiques et recommandations IA.</p>
-              <a href="{% url 'report_ai' %}" class="btn btn-warning btn-dashboard mt-auto">Voir les rapports</a>
+             <li class="nav-item">
+                  <a class="nav-link" href="{% url 'report_ai_view' %}">Rapports</a>
+            </li>
+
             </div>
           </div>
         </div>

@@ -2,27 +2,20 @@
 from django import forms
 from django.forms import modelformset_factory
 from .models import Article, Fournisseur, Commande, Avoir, CustomUser
-from .utils import envoyer_sms  # Fonction d'envoi 
+
 from .models import UserProfile
 from django.forms.models import BaseInlineFormSet
 from .models import Commande, Avoir
 from django import forms
 from django.contrib.auth import get_user_model
 from .models import Fournisseur
-from django import forms
 from .models import MouvementStock
 from .models import DemandeArticle 
-from django import forms
 from django.forms import modelformset_factory
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 
 class CustomUserCreationForm(UserCreationForm):
-    class Meta:
-        model = CustomUser
-        fields = ('username', 'email', 'role')
-
-class CustomUserChangeForm(UserChangeForm):
     class Meta:
         model = CustomUser
         fields = ('username', 'email', 'role')
@@ -62,21 +55,6 @@ class AvoirForm(forms.ModelForm):
 # Formset Avoir
 AvoirFormSet = modelformset_factory(Avoir, fields='__all__')
 
-# CompleteProfileForm pour le numéro de téléphone
-class CompleteProfileForm(forms.ModelForm):
-    class Meta:
-        model = CustomUser
-        fields = ['phone_number']
-        widgets = {
-            'phone_number': forms.TextInput(attrs={
-                'class': 'form-control highlight-yellow',
-                'placeholder': 'Votre numéro de téléphone'
-            }),
-        }
-
-    def clean_phone_number(self):
-        # Validation du numéro de téléphone
-        return self.cleaned_data.get('phone_number')
 
 # Formulaire simple si nécessaire
 class ProfilForm(forms.Form):
@@ -113,7 +91,7 @@ class BaseAvoirFormSet(BaseInlineFormSet):
                 form.add_error('quantite',
                     f"Quantité maximale disponible : {article.quantite}")
 
-from django import forms
+
 
 class EmailVerificationForm(forms.Form):
     email = forms.EmailField(label="Votre adresse e-mail", max_length=254)
@@ -145,8 +123,15 @@ class FournisseurUserForm(forms.Form):
 class MouvementStockForm(forms.ModelForm):
     class Meta:
         model = MouvementStock
-        fields = ['article', 'quantite', 'motif']
-
+        fields = [
+            'article',
+            'quantite',
+            'motif',
+        ]
+        widgets = {
+            'quantite': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'motif': forms.TextInput(attrs={'class': 'form-control'}),
+        }
     def clean(self):
         cleaned_data = super().clean()
         article = cleaned_data.get('article')

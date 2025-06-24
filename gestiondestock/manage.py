@@ -2,6 +2,9 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from dotenv import load_dotenv
+load_dotenv()
+
 
 def main():
     """Run administrative tasks."""
@@ -18,5 +21,11 @@ def main():
 from django.core.management import execute_from_command_line
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "gestiondestock.settings")  # Ceci doit être correct
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "gestiondestock.settings")  
     execute_from_command_line(sys.argv)
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(dotenv_path=BASE_DIR / '.env')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
