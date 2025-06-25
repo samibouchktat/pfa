@@ -1,4 +1,8 @@
 import os
+from .models import Article, MouvementStock
+from .utils import generate_report
+#rom openai.error import RateLimitError, OpenAIError    
+from .utils import generate_report 
 from django.db.models import F
 from django.shortcuts import render
 from django.utils.timezone import now
@@ -804,11 +808,7 @@ from .utils import generate_openai_report
 
 def is_manager(user):
     return getattr(user, "role", "") in ("gestionnaire", "admin")
-from openai.error import RateLimitError
-from .models import Article, MouvementStock
-from .utils import generate_report
-from openai.error import RateLimitError, OpenAIError    
-from .utils import generate_report  # votre fonction wrapper OpenAI
+ # votre fonction wrapper OpenAI
 
 def is_manager(user):
     return getattr(user, "role", "") in ("gestionnaire", "admin")
