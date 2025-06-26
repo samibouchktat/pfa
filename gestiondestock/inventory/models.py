@@ -239,6 +239,7 @@ class TwoFactorCode(models.Model):
         return timezone.now() > self.expiration_time
 
     @staticmethod
+    
     def generate_code():
         return ''.join(random.choices(string.digits, k=6))
 

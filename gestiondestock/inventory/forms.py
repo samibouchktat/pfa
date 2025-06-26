@@ -120,33 +120,11 @@ class FournisseurUserForm(forms.Form):
     contact = forms.CharField(label="Contact", max_length=20)
     adresse = forms.CharField(label="Adresse", max_length=255, required=False)
 
+    
 class MouvementStockForm(forms.ModelForm):
     class Meta:
         model = MouvementStock
-        fields = [
-            'article',
-            'quantite',
-            'motif',
-        ]
-        widgets = {
-            'quantite': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'motif': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-    def clean(self):
-        cleaned_data = super().clean()
-        article = cleaned_data.get('article')
-        quantite = cleaned_data.get('quantite')
-        type_mouvement = self.instance.type_mouvement  # ← cette ligne est essentielle
-
-        # Appliquer la vérification du stock uniquement pour les sorties
-        if type_mouvement == 'sortie' and article and quantite:
-            if article.stock < quantite:
-                raise forms.ValidationError(
-                    f"Stock insuffisant pour effectuer la sortie. Quantité demandée = {quantite}, quantité disponible = {article.stock}."
-                )
-
-        return cleaned_data
-
+        fields = ['quantite', 'motif']
 class DemandeArticleForm(forms.ModelForm):
     class Meta:
         model = DemandeArticle

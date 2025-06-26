@@ -439,7 +439,7 @@
 
       <div class="nav-section">
         <div class="nav-section-title">Analyses</div>
-        <a href="{% url 'report_ai_view' %}" class="open-modal">
+        <a href="{% url 'report_ai' %}" class="open-modal">
           <i class="fas fa-chart-line"></i>
           <span>Rapports</span>
         </a>
@@ -459,7 +459,8 @@
           <i class="fas fa-envelope"></i>
           <span>Messages</span>
         </a>
-        <a href="{% url 'complete_profile' %}" class="open-modal">
+        
+        <a href="{% url 'complete_profile' %}" class="nav-link open-modal" data-title="Mon profil">
           <i class="fas fa-shield-alt"></i>
           <span>Sécurité</span>
         </a>
@@ -488,7 +489,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'report_ai_view' %}">
+            <a class="nav-link" href="{% url 'report_ai' %}">
               <i class="fas fa-chart-line me-2"></i>Rapports
             </a>
           </li>

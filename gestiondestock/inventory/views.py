@@ -1,8 +1,4 @@
 import os
-from .models import Article, MouvementStock
-from .utils import generate_report
-#rom openai.error import RateLimitError, OpenAIError    
-from .utils import generate_report 
 from django.db.models import F
 from django.shortcuts import render
 from django.utils.timezone import now
@@ -10,7 +6,6 @@ from django.db.models import F
 from .models import Article
 import json
 import datetime
-from django.db import IntegrityError
 from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
@@ -52,7 +47,7 @@ from datetime import datetime
 from .models import Article
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
-
+from .utils import generate_report
 from django.http import JsonResponse
 from .forms import ArticleUpdateForm
 AvoirFormSet = inlineformset_factory(Commande, Avoir, fields=('article','quantite'), extra=1, can_delete=True)
@@ -68,11 +63,6 @@ from .forms import (
 )
 from .utils import generate_report
 from django.db.models import F
-from django.shortcuts import render
-from django.conf import settings
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Sum
-import openai
 
 def is_manager(user):
     return getattr(user, "role", None) in {"gestionnaire", "admin"}
@@ -129,7 +119,6 @@ def log_out(request):
     messages.success(request, "Vous êtes maintenant déconnecté.")
     return redirect('login')
 
-
 @login_required
 def dashboard_gestionnaire(request):
     return render(request, 'dashboard_gestionnaire.html')
@@ -138,6 +127,7 @@ def dashboard_gestionnaire(request):
 @login_required
 def dashboard_employe(request):
     return render(request, 'dashboard_employe.html')
+
 
 
 @login_required
@@ -224,7 +214,7 @@ def edit_product(request, id):
     if form.is_valid():
         form.save()
         messages.success(request, "Produit modifié avec succès.")
-        return redirect('product_list')  # Redirige vers ta liste d’articles
+        return redirect('product_list')  # Redirige vers ta liste d'articles
     return render(request, 'edit_product.html', {'form': form, 'article': article})
 @login_required
 def delete_product(request, id):
@@ -348,8 +338,18 @@ def complete_profile(request):
         "email": email,
         "form": form_code
     })
+# Rapport IA
 
+@login_required
+@user_passes_test(is_manager)
+def report_ai_view(request):
+    rapport_texte = generate_report(request)
+    print("=== RAPPORT GÉNÉRÉ ===")
+    print(rapport_texte)  # Affiche dans le terminal
 
+    return render(request, 'report_ai.html', {
+        'rapport_texte': rapport_texte
+    })
 @login_required
 def commande_list(request):
     commandes = Commande.objects.filter(employe=request.user)
@@ -390,115 +390,28 @@ def is_gestionnaire(user):
 @user_passes_test(is_gestionnaire)
 def fournisseur_list(request):
     fournisseurs = Fournisseur.objects.all()
-    print("Fournisseurs trouvés :", fournisseurs.count())
-    for f in fournisseurs:
-        print(f"Fournisseur : {f.pk} {f.nom} | User: {f.user}")
     return render(request, 'fournisseur_list.html', {'fournisseurs': fournisseurs})
-
-@login_required
-@user_passes_test(is_gestionnaire)
 def add_fournisseur(request):
-    import traceback
     if request.method == "POST":
         form = FournisseurUserForm(request.POST)
-        print(">>>> FORM POSTED", request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            print(">>>> FORM IS VALID", data)
             User = get_user_model()
-            user = None
-            username = data.get('username')
-            password = data.get('password')
-            email = data.get('email')
-            if username and password:
-                try:
-                    user = User.objects.create_user(
-                        username=username,
-                        password=password,
-                        email=email,
-                        role='fournisseur'
-                    )
-                    print(">>>> USER CREATED", user)
-                except Exception as e:
-                    print(">>>> ERREUR CRÉATION USER", e)
-                    traceback.print_exc()
-                    form.add_error(None, f"Erreur création user: {e}")
-                    return render(request, 'add_fournisseur.html', {'form': form})
-            try:
-                fournisseur = Fournisseur.objects.create(
-                    user=user,
-                    nom=data['nom'],
-                    contact=data['contact'],
-                    email=email,
-                    adresse=data['adresse']
-                )
-                print(">>>> FOURNISSEUR CRÉÉ", fournisseur.pk, fournisseur.nom)
-                messages.success(request, "Fournisseur ajouté avec succès.")
-                return redirect('fournisseur_list')
-            except Exception as e:
-                print(">>>> ERREUR FOURNISSEUR", e)
-                traceback.print_exc()
-                form.add_error(None, f"Erreur fournisseur: {e}")
-                return render(request, 'add_fournisseur.html', {'form': form})
-        else:
-            print(">>>> FORM NOT VALID", form.errors)
-            # Affiche les erreurs dans le template
-            for field, errs in form.errors.items():
-                for err in errs:
-                    form.add_error(field, err)
-    else:
-        form = FournisseurUserForm()
-    return render(request, 'add_fournisseur.html', {'form': form})@login_required
-@user_passes_test(is_gestionnaire)
-def add_fournisseur(request):
-    import traceback
-    if request.method == "POST":
-        form = FournisseurUserForm(request.POST)
-        print(">>>> FORM POSTED", request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            print(">>>> FORM IS VALID", data)
-            User = get_user_model()
-            user = None
-            username = data.get('username')
-            password = data.get('password')
-            email = data.get('email')
-            if username and password:
-                try:
-                    user = User.objects.create_user(
-                        username=username,
-                        password=password,
-                        email=email,
-                        role='fournisseur'
-                    )
-                    print(">>>> USER CREATED", user)
-                except Exception as e:
-                    print(">>>> ERREUR CRÉATION USER", e)
-                    traceback.print_exc()
-                    form.add_error(None, f"Erreur création user: {e}")
-                    return render(request, 'add_fournisseur.html', {'form': form})
-            try:
-                fournisseur = Fournisseur.objects.create(
-                    user=user,
-                    nom=data['nom'],
-                    contact=data['contact'],
-                    email=email,
-                    adresse=data['adresse']
-                )
-                print(">>>> FOURNISSEUR CRÉÉ", fournisseur.pk, fournisseur.nom)
-                messages.success(request, "Fournisseur ajouté avec succès.")
-                return redirect('fournisseur_list')
-            except Exception as e:
-                print(">>>> ERREUR FOURNISSEUR", e)
-                traceback.print_exc()
-                form.add_error(None, f"Erreur fournisseur: {e}")
-                return render(request, 'add_fournisseur.html', {'form': form})
-        else:
-            print(">>>> FORM NOT VALID", form.errors)
-            # Affiche les erreurs dans le template
-            for field, errs in form.errors.items():
-                for err in errs:
-                    form.add_error(field, err)
+            user = User.objects.create_user(
+                username=data['username'],
+                password=data['password'],
+                email=data['email'],
+                role='fournisseur'
+            )
+            Fournisseur.objects.create(
+                user=user,  # On lie le fournisseur au user créé
+                nom=data['nom'],
+                contact=data['contact'],
+                email=data['email'],
+                adresse=data['adresse']
+            )
+            messages.success(request, "Fournisseur et compte utilisateur créés.")
+            return redirect('fournisseur_list')
     else:
         form = FournisseurUserForm()
     return render(request, 'add_fournisseur.html', {'form': form})
@@ -562,11 +475,9 @@ def stats_mouvements_stock(request):
 
 @login_required
 def stats_articles_rupture(request):
-    ruptures = Article.objects.filter(stock=0)
-    return JsonResponse({
-        'labels': [a.nom for a in ruptures],
-        'data': [a.stock for a in ruptures]
-    })
+    # Articles dont le stock est inférieur au stock minimum
+    rupture = Article.objects.filter(stock__lt=F('stock_min')).count()
+    return JsonResponse({'rupture': rupture})
 
 @login_required
 def stats_commandes_par_fournisseur(request):
@@ -593,9 +504,9 @@ def nouvelle_entree(request):
     else:
         form = MouvementStockForm()
     return render(request, 'nouvelle_entree.html', {'form': form})
+
 @login_required
 @user_passes_test(is_gestionnaire)
-
 def nouvelle_sortie(request):
     if request.method == 'POST':
         form = MouvementStockForm(request.POST)
@@ -638,7 +549,7 @@ def liste_demandes(request):
     # Toutes les demandes, du plus récent au plus ancien
     demandes = DemandeArticle.objects.select_related('article', 'employe').order_by('-date_demande')
 
-    # Filtre par statut si demandé (ex : ?statut=en_attente)
+    # Filtre par statut si demandé (ex : ?statut=en_attente)
     statut = request.GET.get('statut')
     if statut:
         demandes = demandes.filter(statut=statut)
@@ -744,14 +655,14 @@ def modifier_quantite(request, pk):
             form.save()  # met à jour quantite + stock via save() override
             # Après save(), on peut récupérer le user et son secondary_email
             utilisateur = request.user
-            if article.stock < 20:
+            if article.stock < article.stock_min:
                 email_dest = utilisateur.secondary_email
                 if email_dest:
                     # Composez ici le même corps / sujet que précédemment
                     sujet = f"⚠️ Stock critique pour « {article.nom} »"
                     corps = (
                         f"Bonjour {utilisateur.username},\n\n"
-                        f"Le stock de l’article « {article.nom} » (Réf : {article.reference}) "
+                        f"Le stock de l'article « {article.nom} » (Réf : {article.reference}) "
                         f"est critique ({article.stock} unités, seuil : {article.stock_min}).\n\n"
                         "Merci de réagir rapidement.\n"
                     )
@@ -771,89 +682,230 @@ def modifier_quantite(request, pk):
         "form": form
     })
 
-
-
-
-
-
-
-
-
-
-def is_manager(user):
-    return getattr(user, "role", None) in {"gestionnaire", "admin"}
-
-import openai
-from django.conf import settings
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Sum
-
-from .models import Article, MouvementStock
-
-def is_manager(user):
-    return getattr(user, "role", None) in {"gestionnaire", "admin"}
-import logging
-logger = logging.getLogger(__name__)
-def is_manager(u):
-    return getattr(u, "role", "") in ("gestionnaire", "admin")
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required, user_passes_test
-
-from .models import Article, MouvementStock
-from django.db.models import Sum
-from django.utils import timezone
-from .utils import generate_openai_report
-
-
-def is_manager(user):
-    return getattr(user, "role", "") in ("gestionnaire", "admin")
- # votre fonction wrapper OpenAI
-
-def is_manager(user):
-    return getattr(user, "role", "") in ("gestionnaire", "admin")
+@login_required
+def stats_total_articles(request):
+    total = Article.objects.count()
+    return JsonResponse({'total': total})
 
 @login_required
-@user_passes_test(is_manager)
-def report_ai_view(request):
-    # 1️⃣ On calcule toujours le résumé pour affichage en GET et POST
-    data_summary = []
-    articles   = Article.objects.all()
-    mouvements = MouvementStock.objects.all()
-    for art in articles:
-        in_qty  = (
-            mouvements
-            .filter(article=art, type_mouvement="ENTREE")
-            .aggregate(total=Sum('quantite'))['total']
-            or 0
-        )
-        out_qty = (
-            mouvements
-            .filter(article=art, type_mouvement="SORTIE")
-            .aggregate(total=Sum('quantite'))['total']
-            or 0
-        )
-        data_summary.append(
-            f"- {art.nom} : {in_qty} entrées, {out_qty} sorties, stock actuel {art.stock}"
-        )
+def stats_fournisseurs_actifs(request):
+    # Fournisseurs ayant au moins une commande dans les 30 derniers jours
+    date_limite = timezone.now().date() - timedelta(days=30)
+    actifs = Fournisseur.objects.filter(
+        commande__date__gte=date_limite
+    ).distinct().count()
+    return JsonResponse({'actifs': actifs})
 
-    sections = []
-    error    = None
+@login_required
+def stats_commandes_en_cours(request):
+    # Commandes avec état "en attente" ou équivalent
+    en_cours = Commande.objects.filter(
+        etat__in=['en_attente', 'en cours']
+    ).count()
+    return JsonResponse({'en_cours': en_cours})
 
-    if request.method == "POST":
-        try:
-            report    = generate_report(data_summary)
-            sections  = [s.strip() for s in report.split("\n\n") if s.strip()]
-        except RateLimitError:
-            error = "🚫 Votre quota OpenAI est dépassé, merci de réessayer plus tard."
-        except OpenAIError as e:
-            error = f"🚨 Erreur OpenAI : {e}"
-        except Exception as e:
-            error = f"❌ Une erreur est survenue : {e}"
-
-    return render(request, "openai_report.html", {
-        "data_summary": data_summary,
-        "sections":     sections,
-        "error":        error,
-    })
+@login_required
+def stats_evolution_stocks(request):
+    # Evolution sur 30 jours
+    date_debut = timezone.now().date() - timedelta(days=30)
     
+    # Récupérer tous les mouvements de stock
+    mouvements = MouvementStock.objects.filter(
+        date__date__gte=date_debut
+    ).order_by('date__date')
+    
+    # Initialiser le dictionnaire avec toutes les dates
+    evolution = {}
+    date_courante = date_debut
+    while date_courante <= timezone.now().date():
+        evolution[date_courante.isoformat()] = 0
+        date_courante += timedelta(days=1)
+    
+    # Calculer les variations par jour
+    for mvt in mouvements:
+        date = mvt.date.date().isoformat()
+        if mvt.type_mouvement == 'entree':
+            evolution[date] += mvt.quantite
+        else:  # sortie
+            evolution[date] -= mvt.quantite
+    
+    return JsonResponse({
+        'dates': list(evolution.keys()),
+        'variations': list(evolution.values())
+    })
+
+@login_required
+def stats_delai_livraison(request):
+    """
+    Calcule le délai moyen de livraison par fournisseur
+    en se basant sur les commandes validées
+    """
+    try:
+        # On prend les commandes validées des 90 derniers jours pour avoir des données pertinentes
+        date_limite = timezone.now().date() - timedelta(days=90)
+        
+        # Récupérer les fournisseurs qui ont au moins une commande
+        fournisseurs = Fournisseur.objects.filter(
+            commande__date__gte=date_limite
+        ).distinct()
+
+        # Préparer les données
+        noms_fournisseurs = []
+        delais = []
+
+        for fournisseur in fournisseurs:
+            noms_fournisseurs.append(fournisseur.nom)
+            # Pour l'instant on met un délai fixe de 5 jours
+            # Vous pourrez adapter ce calcul selon vos besoins réels
+            delais.append(5)
+
+        # Si aucune donnée, mettre des données par défaut
+        if not noms_fournisseurs:
+            noms_fournisseurs = ['Aucune donnée']
+            delais = [0]
+
+        return JsonResponse({
+            'fournisseurs': noms_fournisseurs,
+            'delais': delais
+        })
+    except Exception as e:
+        # En cas d'erreur, renvoyer des données par défaut
+        return JsonResponse({
+            'fournisseurs': ['Erreur de données'],
+            'delais': [0]
+        })
+
+@login_required
+def stats_stock_minimum(request):
+    """
+    Analyse la répartition des stocks par état (critique, normal, excédentaire)
+    """
+    try:
+        # Récupérer tous les articles avec stock et stock_min
+        articles = Article.objects.filter(stock_min__gt=0)
+        
+        # Initialiser les compteurs
+        critique = 0  # Stock < stock_min
+        attention = 0  # Stock entre stock_min et 2*stock_min
+        normal = 0    # Stock entre 2*stock_min et 3*stock_min
+        excedent = 0  # Stock > 3*stock_min
+        
+        # Calculer la répartition
+        for article in articles:
+            ratio = article.stock / article.stock_min if article.stock_min > 0 else 0
+            
+            if ratio < 1:
+                critique += 1
+            elif ratio < 2:
+                attention += 1
+            elif ratio < 3:
+                normal += 1
+            else:
+                excedent += 1
+        
+        # Si aucun article, mettre des valeurs par défaut
+        total = critique + attention + normal + excedent
+        if total == 0:
+            return JsonResponse({
+                'labels': ['Aucune donnée'],
+                'data': [1],
+                'colors': ['#e0e0e0']
+            })
+        
+        # Préparer les données pour le graphique
+        return JsonResponse({
+            'labels': [
+                f'Critique (<100%) : {critique} articles',
+                f'Attention (100-200%) : {attention} articles',
+                f'Normal (200-300%) : {normal} articles',
+                f'Excédent (>300%) : {excedent} articles'
+            ],
+            'data': [critique, attention, normal, excedent],
+            'colors': [
+                '#dc3545',  # Rouge pour critique
+                '#ffc107',  # Jaune pour attention
+                '#28a745',  # Vert pour normal
+                '#17a2b8'   # Bleu pour excédent
+            ]
+        })
+        
+    except Exception as e:
+        # En cas d'erreur, renvoyer des données par défaut
+        return JsonResponse({
+            'labels': ['Erreur de données'],
+            'data': [1],
+            'colors': ['#dc3545']
+        })
+
+@login_required
+def stats_impact_co2(request):
+    # Impact CO2 total par article
+    articles = Article.objects.exclude(facteur_co2=0).order_by('-facteur_co2')[:10]
+    impact = {
+        a.nom: round(a.facteur_co2 * a.stock, 2)
+        for a in articles
+    }
+    
+    return JsonResponse({
+        'articles': list(impact.keys()),
+        'co2': list(impact.values())
+    })
+
+@login_required
+def stats_total_articles(request):
+    total = Article.objects.count()
+    return JsonResponse({'total': total})
+
+@login_required
+def stats_fournisseurs_actifs(request):
+    # Fournisseurs ayant au moins une commande dans les 30 derniers jours
+    date_limite = timezone.now().date() - timedelta(days=30)
+    actifs = Fournisseur.objects.filter(
+        commande__date__gte=date_limite
+    ).distinct().count()
+    return JsonResponse({'actifs': actifs})
+
+@login_required
+def stats_commandes_en_cours(request):
+    # Commandes avec état "en attente" ou équivalent
+    en_cours = Commande.objects.filter(
+        etat__in=['en_attente', 'en cours']
+    ).count()
+    return JsonResponse({'en_cours': en_cours})
+
+@login_required
+def stats_evolution_stocks(request):
+    # Evolution sur 30 jours
+    date_debut = timezone.now().date() - timedelta(days=30)
+    
+    # Récupérer tous les mouvements de stock
+    mouvements = MouvementStock.objects.filter(
+        date__date__gte=date_debut
+    ).order_by('date__date')
+    
+    # Initialiser le dictionnaire avec toutes les dates
+    evolution = {}
+    date_courante = date_debut
+    while date_courante <= timezone.now().date():
+        evolution[date_courante.isoformat()] = 0
+        date_courante += timedelta(days=1)
+    
+    # Calculer les variations par jour
+    for mvt in mouvements:
+        date = mvt.date.date().isoformat()
+        if mvt.type_mouvement == 'entree':
+            evolution[date] += mvt.quantite
+        else:  # sortie
+            evolution[date] -= mvt.quantite
+    
+    return JsonResponse({
+        'dates': list(evolution.keys()),
+        'variations': list(evolution.values())
+    })
+
+
+
+
+
+
+
