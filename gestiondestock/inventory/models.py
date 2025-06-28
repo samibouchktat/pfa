@@ -367,7 +367,6 @@ class DemandeArticle(models.Model):
     employe = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={'role': 'employe'})
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     quantite = models.PositiveIntegerField()
-    # Si tu as un modèle Categorie, garde-le, sinon retire ce champ :
     date_demande = models.DateTimeField(auto_now_add=True)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='en_attente')
 

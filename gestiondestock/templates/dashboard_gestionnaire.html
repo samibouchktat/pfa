@@ -423,14 +423,12 @@
 
       <div class="nav-section">
         <div class="nav-section-title">Gestion Stock</div>
-        <a href="{% url 'nouvelle_entree' %}" class="open-modal">
-          <i class="fas fa-arrow-down"></i>
-          <span>Entrée stock</span>
-        </a>
-        <a href="{% url 'nouvelle_sortie' %}" class="open-modal">
-          <i class="fas fa-arrow-up"></i>
-          <span>Sortie stock</span>
-        </a>
+        
+
+<a href="{% url 'nouvelle_entree' article.id %}" class="open-modal">
+  Entrée stock pour {{ article.nom }}
+</a>
+
         <a href="{% url 'liste_demandes' %}" class="open-modal">
           <i class="fas fa-clipboard-list"></i>
           <span>Demandes</span>
@@ -459,7 +457,7 @@
           <i class="fas fa-envelope"></i>
           <span>Messages</span>
         </a>
-        
+
         <a href="{% url 'complete_profile' %}" class="nav-link open-modal" data-title="Mon profil">
           <i class="fas fa-shield-alt"></i>
           <span>Sécurité</span>
@@ -476,7 +474,7 @@
       </button>
       
       <div class="collapse navbar-collapse" id="navMenu">
-        <ul class="navbar-nav me-auto">
+        <ul class="navbar-nav me-auto"><a href=
           <li class="nav-item">
             <a class="nav-link" href="{% url 'product_list' %}">
               <i class="fas fa-box-open me-2"></i>Produits
@@ -502,12 +500,15 @@
               3
             </span>
           </a>
-          
+      <form method="post" action="{% url 'log_out' %}" class="d-none d-lg-inline-block ms-2">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger-action w-100">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Déconnexion</span>
+      </button>
+    </form>
           <div class="dropdown">
-            <button class="btn btn-modern btn-modern-outline dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown">
-              <i class="fas fa-user-circle"></i>
-              <span>{{ request.user.username }}</span>
-            </button>
+
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="{% url 'complete_profile' %}">
                 <i class="fas fa-user-cog me-2"></i>Profil
@@ -521,6 +522,7 @@
         </div>
       </div>
     </div>
+
   </nav>
 
   <!-- Main Content -->

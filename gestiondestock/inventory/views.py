@@ -207,15 +207,7 @@ def add_product(request):
         form = ArticleForm()
 
     return render(request, 'add_product.html', {'form': form})
-@login_required
-def edit_product(request, id):
-    article = get_object_or_404(Article, id=id)
-    form = ArticleForm(request.POST or None, instance=article)
-    if form.is_valid():
-        form.save()
-        messages.success(request, "Produit modifié avec succès.")
-        return redirect('product_list')  # Redirige vers ta liste d'articles
-    return render(request, 'edit_product.html', {'form': form, 'article': article})
+
 @login_required
 def delete_product(request, id):
     article = get_object_or_404(Article, id=id)
@@ -489,40 +481,6 @@ def stats_commandes_par_fournisseur(request):
 from django.shortcuts import render, redirect
 
 
-def nouvelle_entree(request):
-    if request.method == 'POST':
-        form = MouvementStockForm(request.POST)
-        if form.is_valid():
-            mouvement = form.save(commit=False)
-            mouvement.type_mouvement = 'entree'
-            mouvement.user = request.user
-            mouvement.save()
-            messages.success(request, "Entrée de stock enregistrée avec succès.")
-            return redirect('product_list')
-        else:
-            print("❌ Erreurs du formulaire :", form.errors)  # ← AJOUT ICI
-    else:
-        form = MouvementStockForm()
-    return render(request, 'nouvelle_entree.html', {'form': form})
-
-@login_required
-@user_passes_test(is_gestionnaire)
-def nouvelle_sortie(request):
-    if request.method == 'POST':
-        form = MouvementStockForm(request.POST)
-        if form.is_valid():
-            mouvement = form.save(commit=False)
-            mouvement.type_mouvement = 'sortie'
-            mouvement.user = request.user
-            try:
-                mouvement.save()
-                messages.success(request, "Sortie de stock enregistrée avec succès.")
-                return redirect('product_list')  # Affiche la liste mise à jour
-            except ValueError as e:
-                form.add_error(None, str(e))
-    else:
-        form = MouvementStockForm()
-    return render(request, 'nouvelle_sortie.html', {'form': form})
 
 def faire_demande(request):
     if request.method == 'POST':
@@ -902,6 +860,63 @@ def stats_evolution_stocks(request):
         'dates': list(evolution.keys()),
         'variations': list(evolution.values())
     })
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, redirect
+from .forms import EntreeStockForm
+from .models import MouvementStock
+
+def is_gestionnaire(user):
+    return user.role in ['gestionnaire', 'admin']
+@login_required
+def edit_product(request, id):
+    article = get_object_or_404(Article, id=id)
+    form = ArticleForm(request.POST or None, instance=article)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Produit modifié avec succès.")
+        return redirect('product_list')  # Redirige vers ta liste d'articles
+    return render(request, 'edit_product.html', {'form': form, 'article': article})
+@login_required
+def nouvelle_entree(request, id):
+    article = get_object_or_404(Article, id=id)
+    if request.method == "POST":
+        form = MouvementStockForm(request.POST)
+        if form.is_valid():
+            mouvement = form.save(commit=False)
+            mouvement.article = article
+            mouvement.save()
+            # Mets à jour le stock de l'article, si ce n'est pas automatique
+            article.stock += mouvement.quantite
+            article.save()
+            messages.success(request, "Entrée de stock enregistrée avec succès.")
+            return redirect('product_list')
+    else:
+        form = MouvementStockForm()
+    return render(request, "nouvelle_entree.html", {"form": form, "article": article})
+
+
+
+  
+
+@login_required
+@user_passes_test(is_gestionnaire)
+def nouvelle_sortie(request):
+    if request.method == "POST":
+        form = MouvementStockForm(request.POST)
+        if form.is_valid():
+            mouvement = form.save(commit=False)
+            mouvement.type_mouvement = 'sortie'
+            mouvement.user = request.user
+            try:
+                mouvement.save()
+                messages.success(request, f"Sortie enregistrée pour {mouvement.article.nom}. Stock à jour : {mouvement.article.stock}")
+                return redirect('product_list')
+            except ValueError as e:
+                form.add_error("quantite", str(e))
+    else:
+        form = MouvementStockForm()
+    return render(request, "nouvelle_sortie.html", {"form": form})
+
 
 
 

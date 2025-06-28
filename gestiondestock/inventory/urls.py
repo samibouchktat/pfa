@@ -83,8 +83,7 @@ urlpatterns = [
 
 # Page HTML statistiques
     path('statistiques/', lambda r: render(r, "statistique.html"), name="statistique"),
-    path('mouvements/entree/', nouvelle_entree, name='nouvelle_entree'),
-    path('mouvements/sortie/', nouvelle_sortie, name='nouvelle_sortie'),
+
     path('employe/demande/', faire_demande, name='faire_demande'),
     path('employe/mes-demandes/', mes_demandes, name='mes_demandes'),
     # inventory/urls.py
@@ -102,4 +101,9 @@ urlpatterns = [
     path('stats/total-articles/', stats_total_articles, name='stats_total_articles'),
     path('stats/fournisseurs-actifs/', stats_fournisseurs_actifs, name='stats_fournisseurs_actifs'),
     path('stats/commandes-en-cours/', stats_commandes_en_cours, name='stats_commandes_en_cours'),
+    # inventory/urls.py
+    path('mouvements/entree/<int:id>/', nouvelle_entree, name='nouvelle_entree'),
+
+    path('mouvements/sortie/', nouvelle_sortie, name='nouvelle_sortie'),
+
 ]

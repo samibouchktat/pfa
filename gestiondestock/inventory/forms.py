@@ -20,28 +20,24 @@ class CustomUserCreationForm(UserCreationForm):
         model = CustomUser
         fields = ('username', 'email', 'role')
 
-
-        
 # Formulaire Article
 class ArticleForm(forms.ModelForm):
     class Meta:
         model = Article
-        # Assure-toi que tous les champs nécessaires sont ici
         fields = ['nom', 'reference', 'description', 'prix', 'quantite', 'stock']
-
     def clean(self):
         cleaned_data = super().clean()
-
         stock = cleaned_data.get('stock')
         quantite = cleaned_data.get('quantite')
-
         if stock is not None and stock < 0:
             raise forms.ValidationError("Le stock ne peut pas être négatif.")
-
         if quantite is not None and quantite < 0:
             raise forms.ValidationError("La quantité ne peut pas être négative.")
-
         return cleaned_data
+
+
+        
+
 # Formulaire Fournisseur
 class CommandeForm(forms.ModelForm):
     class Meta:
@@ -124,7 +120,7 @@ class FournisseurUserForm(forms.Form):
 class MouvementStockForm(forms.ModelForm):
     class Meta:
         model = MouvementStock
-        fields = ['quantite', 'motif']
+        fields = ['article', 'quantite', 'motif']
 class DemandeArticleForm(forms.ModelForm):
     class Meta:
         model = DemandeArticle
@@ -141,3 +137,7 @@ class ArticleUpdateForm(forms.ModelForm):
     class Meta:
         model = Article
         fields = ['quantite']
+class EntreeStockForm(forms.ModelForm):
+    class Meta:
+        model = MouvementStock  
+        fields = ['article', 'quantite', 'motif', 'type_mouvement']
